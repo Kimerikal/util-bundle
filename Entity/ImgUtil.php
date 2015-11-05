@@ -1,6 +1,6 @@
 <?php
 
-namespace Kimerikal\UtilBundle\Entity; 
+namespace Kimerikal\UtilBundle\Entity;
 
 class ImgUtil {
 
@@ -67,9 +67,15 @@ class ImgUtil {
         closedir($dir);
     }
 
-    public static function redimensionarFile($file, $finalWidth = 0) {
-        if ($finalWidth == 0)
-            $finalWidth = ImgUtil::THUMB_WIDTH;
+    public static function redimensionarFile($file, $finalWidth, $newPath = '') {
+        if (empty($newPath))
+            $newPath = $file;
+
+        list($src_width, $src_height, $type) = getimagesize($file);
+
+
+        if ($src_width < $finalWidth)
+            $finalWidth = $src_width;
 
         // Cargamos la imagen y comprobamos el tamaÃƒÂ±o
         $img = imagecreatefromjpeg("{$file}");
@@ -94,11 +100,7 @@ class ImgUtil {
         // Copiamos y redimensionamos la vieja img
         imagecopyresized($tmp_img, $img, 0, 0, 0, 0, $finalWidth, $new_height, $width, $height);
 
-        // Guardamos
-        if (!$png)
-            imagejpeg($tmp_img, "{$file}");
-        else
-            imagepng($tmp_img, "{$file}");
+        return self::write($type, $tmp_img, $newPath);
     }
 
     public static function redimensionarFromString($data) {
@@ -160,19 +162,19 @@ class ImgUtil {
 
         if (!file_exists($src_file) || !filesize($src_file))
             return false;
-        
+
         list($src_width, $src_height, $type) = getimagesize($src_file);
 
         if ($dst_width == $src_width && $dst_height == $src_height)
             return true;
-        
+
         if (!$src_width)
             return false;
         if (!$dst_width)
             $dst_width = $src_width;
         if (!$dst_height)
             $dst_height = $src_height;
-        
+
         $size = getimagesize($src_file);
         if ($size['mime'] == 'image/pjpeg')
             $size['mime'] = 'image/jpeg';

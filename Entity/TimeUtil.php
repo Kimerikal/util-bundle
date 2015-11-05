@@ -1,4 +1,5 @@
 <?php
+
 namespace Kimerikal\UtilBundle\Entity;
 
 class TimeUtil {
@@ -24,24 +25,28 @@ class TimeUtil {
     }
 
     public static function fromMySQLToLocal($dateStr, $toFormat = 'd-m-Y') {
-        $date = DateTime::createFromFormat('Y-m-d', $dateStr);
+        $date = \DateTime::createFromFormat('Y-m-d', $dateStr);
         if (!$date)
             return "";
-        
+
         return $date->format($toFormat);
     }
 
     public static function fromLocalToMySQL($dateStr, $fromFormat = 'd-m-Y') {
-        $date = DateTime::createFromFormat($fromFormat, $dateStr);
+        $date = \DateTime::createFromFormat($fromFormat, $dateStr);
         if (!$date)
             return "";
 
-        return $date->format('Y-m-d');
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    public static function fromStrToDate($dateStr, $fromFormat = 'd-m-Y') {
+        return \DateTime::createFromFormat($fromFormat, $dateStr);
     }
 
     public static function humanTiming($timeStr) {
-        $time = strtotime($timeStr);
-        $time = time() - $time;
+        $time = \strtotime($timeStr);
+        $time = \time() - $time;
         $plurals = array('mes' => 'meses');
         $tokens = array(
             31536000 => 'año',
@@ -70,8 +75,8 @@ class TimeUtil {
     }
 
     public static function isPast($dateStr, $fromFormat = 'Y-m-d') {
-        $date = DateTime::createFromFormat($fromFormat, $dateStr);
-        $today = new DateTime("now");
+        $date = \DateTime::createFromFormat($fromFormat, $dateStr);
+        $today = new \DateTime("now");
         if ($date < $today)
             return true;
 
@@ -79,12 +84,50 @@ class TimeUtil {
     }
 
     public static function isToday($dateStr, $fromFormat = 'Y-m-d') {
-        $date = DateTime::createFromFormat($fromFormat, $dateStr);
-        $today = new DateTime("now");
+        $date = \DateTime::createFromFormat($fromFormat, $dateStr);
+        $today = new \DateTime("now");
         if ($date == $today)
             return true;
 
         return false;
+    }
+
+    public static function mothStrToNumber($monthStr) {
+        $moths = array(
+            "enero" => "01",
+            "febrero" => "02",
+            "marzo" => "03",
+            "abril" => "04",
+            "mayo" => "05",
+            "junio" => "06",
+            "julio" => "07",
+            "agosto" => "08",
+            "septiembre" => "09",
+            "octubre" => "10",
+            "noviembre" => "11",
+            "diciembre" => "12"
+        );
+
+        return $moths[\strtolower($monthStr)];
+    }
+
+    public static function mothNumberToStr($monthNum) {
+        $moths = array(
+            "01" => "Enero",
+            "02" => "Febrero",
+            "03" => "Marzo",
+            "04" => "Abril",
+            "05" => "Mayo",
+            "06" => "Junio",
+            "07" => "Julio",
+            "08" => "Agosto",
+            "09" => "Septiembre",
+            "10" => "Octubre",
+            "11" => "Noviembre",
+            "12" => "Diciembre"
+        );
+
+        return $moths[$monthNum];
     }
 
 }
