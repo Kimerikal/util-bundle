@@ -67,7 +67,7 @@ class ImgUtil {
         closedir($dir);
     }
 
-    public static function redimensionarFile($file, $finalWidth, $newPath = '') {
+    public static function resizeFile($file, $finalWidth, $newPath = '') {
         if (empty($newPath))
             $newPath = $file;
 
