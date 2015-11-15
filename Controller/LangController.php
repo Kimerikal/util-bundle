@@ -24,7 +24,10 @@ class LangController extends UtilController implements LangInterface {
         if (!empty($cookieLang) && $cookieLang != $locale) {
             try {
                 $route = $request->get('_route');
-                $url = $this->generateUrl($route . '.' . $cookieLang);
+                $params = $request->attributes->get('_route_params', array());
+                if (array_key_exists('_locale', $params))
+                    unset($params['_locale']);
+                $url = $this->generateUrl($route . '.' . $cookieLang, $params);
             } catch (RouteNotFoundException $e) {
                 $url = null;
             }
@@ -48,7 +51,7 @@ class LangController extends UtilController implements LangInterface {
             if (!empty($ipCountry) && isset($ipCountry['countryCode']))
                 $ipLang = strtolower($ipCountry['countryCode']);
         }
-        
+
         $browser = new BrowserUtil();
         $browserLang = $browser->getLang();
         if ($browserLang == $ipLang && in_array($ipLang, $allowedLangs))

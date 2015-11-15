@@ -74,7 +74,17 @@ class TimeUtil {
         }
     }
 
+    /**
+     * Check if a given date is in the past.
+     * 
+     * @param type $dateStr - Date in a string or DateTime accepted
+     * @param type $fromFormat - String with date format
+     * @return boolean
+     */
     public static function isPast($dateStr, $fromFormat = 'Y-m-d') {
+        if (!is_string($dateStr))
+            $dateStr = $dateStr->format($fromFormat);
+        
         $date = \DateTime::createFromFormat($fromFormat, $dateStr);
         $today = new \DateTime("now");
         if ($date < $today)
