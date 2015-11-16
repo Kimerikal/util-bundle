@@ -112,4 +112,11 @@ class UtilController extends Controller {
         return $this->get('translator');
     }
 
+    protected function translate($str) {
+        if (empty($str))
+            return '';
+
+        return $this->translator()->trans($str);
+    }
+
 }
