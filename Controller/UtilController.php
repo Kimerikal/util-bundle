@@ -108,4 +108,8 @@ class UtilController extends Controller {
         return $this->session('user_environment', $environment);
     }
 
+    protected function translator() {
+        return $this->get('translator');
+    }
+
 }
