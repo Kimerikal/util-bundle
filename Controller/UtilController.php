@@ -4,6 +4,7 @@ namespace Kimerikal\UtilBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Form\Form;
 
 class UtilController extends Controller {
 
@@ -117,6 +118,32 @@ class UtilController extends Controller {
             return '';
 
         return $this->translator()->trans($str);
+    }
+
+    protected function persist($object, $flush = true) {
+        $this->doctrine()->persist($object);
+        if ($flush)
+            $this->doctrine()->flush();
+    }
+
+    /**
+     * Crea
+     * 
+     * @param Request $r
+     * @param type $form
+     * @param type $object
+     * @param type $save
+     * @return type
+     */
+    protected function checkSaveForm(Request $r, Form &$form, $save = true) {
+        $form->handleRequest($r);
+        if ($save && $form->isSubmitted() && $form->isValid()) {
+            $this->persist($form->getData());
+            return true;
+        } else if ($form->isSubmitted() && !$form->isValid())
+            return false;
+
+        return null;
     }
 
 }
