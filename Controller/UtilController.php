@@ -5,6 +5,7 @@ namespace Kimerikal\UtilBundle\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Form\Form;
+use Kimerikal\UtilBundle\Entity\StrUtil;
 
 class UtilController extends Controller {
 
@@ -127,18 +128,37 @@ class UtilController extends Controller {
     }
 
     /**
-     * Crea
      * 
      * @param Request $r
-     * @param type $form
-     * @param type $object
-     * @param type $save
-     * @return type
+     * @param Form $form
+     * @param boolean $save
+     * @param array $callbackBefore - Array con el método a llamar key = method y un array de parámetros
+     * @param array $callbackAfter
+     * @return boolean
      */
-    protected function checkSaveForm(Request $r, Form &$form, $save = true) {
+    protected function checkSaveForm(Request $r, Form &$form, $save = true, $callbackBefore = null, $callbackAfter = null) {
         $form->handleRequest($r);
         if ($save && $form->isSubmitted() && $form->isValid()) {
+            if (\count($callbackBefore) >= 1 && \array_key_exists('method', $callbackBefore)) {
+                $params = array();
+                if (\array_key_exists('params', $callbackBefore)) {
+                    $params = $callbackBefore['params'];
+                    foreach ($params as &$p) {
+                        $tmp = \explode('|', $p);
+                        if (count($tmp) > 1) {
+                            $p = \call_user_func_array(array($form->getData(), $tmp[1]), $params);
+                        }
+                    }
+                }
+                \call_user_func_array(array($form->getData(), $callbackBefore['method']), $params);
+            }
+
             $this->persist($form->getData());
+
+            if (\count($callbackAfter) >= 1 && \array_key_exists('method', $callbackAfter)) {
+                \call_user_func_array(array($form->getData(), $callbackAfter['method']), (\array_key_exists('params', $callbackAfter) ? $callbackAfter['params'] : null));
+            }
+
             return true;
         } else if ($form->isSubmitted() && !$form->isValid())
             return false;

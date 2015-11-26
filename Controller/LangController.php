@@ -60,4 +60,12 @@ class LangController extends UtilController implements LangInterface {
             $locale = $browserLang;
     }
 
+    protected function localeToCountry($locale) {
+        $countries = array('en' => 'gb');
+        if (\array_key_exists($locale, $countries))
+            return $countries[$locale];
+
+        return $locale;
+    }
+
 }
