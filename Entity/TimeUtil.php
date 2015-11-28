@@ -44,9 +44,12 @@ class TimeUtil {
         return \DateTime::createFromFormat($fromFormat, $dateStr);
     }
 
-    public static function humanTiming($timeStr) {
+    public static function humanTiming($timeStr, $in = '') {
         $time = \strtotime($timeStr);
         $time = \time() - $time;
+        if (!self::isPast($timeStr, 'Y-m-d'))
+            $time = \abs($time);
+        
         $plurals = array('mes' => 'meses');
         $tokens = array(
             31536000 => 'año',
@@ -58,19 +61,36 @@ class TimeUtil {
             1 => 'segundo'
         );
 
-        foreach ($tokens as $unit => $text) {
-            if ($time < $unit)
-                continue;
-            $numberOfUnits = floor($time / $unit);
-            if ($numberOfUnits > 1) {
-                if (array_key_exists($text, $plurals)) {
-                    $text = $plurals[$text];
-                } else {
-                    $text .= 's';
-                }
-            }
+        $units = array(
+            'y' => 31536000,
+            'm' => 2592000,
+            'sem' => 604800,
+            'd' => 86400,
+            'h' => 3600,
+            'm' => 60,
+            's' => 1
+        );
 
-            return "Hace " . $numberOfUnits . ' ' . $text;
+        if (!empty($in) && \array_key_exists($in, $units)) {
+            if ($time < $units[$in])
+                return 0;
+
+            return \floor($time / $units[$in]);
+        } else {
+            foreach ($tokens as $unit => $text) {
+                if ($time < $unit)
+                    continue;
+                $numberOfUnits = floor($time / $unit);
+                if ($numberOfUnits > 1) {
+                    if (array_key_exists($text, $plurals)) {
+                        $text = $plurals[$text];
+                    } else {
+                        $text .= 's';
+                    }
+                }
+
+                return "Hace " . $numberOfUnits . ' ' . $text;
+            }
         }
     }
 
@@ -84,7 +104,7 @@ class TimeUtil {
     public static function isPast($dateStr, $fromFormat = 'Y-m-d') {
         if (!is_string($dateStr))
             $dateStr = $dateStr->format($fromFormat);
-        
+
         $date = \DateTime::createFromFormat($fromFormat, $dateStr);
         $today = new \DateTime("now");
         if ($date < $today)

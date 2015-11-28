@@ -144,9 +144,11 @@ class UtilController extends Controller {
                 if (\array_key_exists('params', $callbackBefore)) {
                     $params = $callbackBefore['params'];
                     foreach ($params as &$p) {
-                        $tmp = \explode('|', $p);
-                        if (count($tmp) > 1) {
-                            $p = \call_user_func_array(array($form->getData(), $tmp[1]), $params);
+                        if (is_string($p)) {
+                            $tmp = \explode('|', $p);
+                            if (count($tmp) > 1) {
+                                $p = \call_user_func_array(array($form->getData(), $tmp[1]), $params);
+                            }
                         }
                     }
                 }
