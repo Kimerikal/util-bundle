@@ -44,7 +44,12 @@ class UtilController extends Controller {
     }
 
     protected function getFullUrl(Request $request, $path = '', $clear = array('/app_dev.php')) {
-        $url = $request->getUriForPath($path);
+        $base = $request->getUriForPath('');
+        $gen = '';
+        if (!empty($path))
+            $gen = $this->generateUrl($path);
+
+        $url = $base . $gen;
         if (!empty($clear)) {
             if (!is_array($clear))
                 $clear = array($clear);
