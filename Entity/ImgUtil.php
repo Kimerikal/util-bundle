@@ -78,9 +78,11 @@ class ImgUtil {
             $finalWidth = $src_width;
 
         // Cargamos la imagen y comprobamos el tamaÃƒÂ±o
-        $img = imagecreatefromjpeg("{$file}");
         $png = false;
-        if (!$img) {
+
+        try {
+            $img = imagecreatefromjpeg("{$file}");
+        } catch (\Exception $e) {
             $img = imagecreatefrompng("{$file}");
             $png = true;
         }

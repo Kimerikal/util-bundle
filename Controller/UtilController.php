@@ -144,33 +144,50 @@ class UtilController extends Controller {
     protected function checkSaveForm(Request $r, Form &$form, $save = true, $callbackBefore = null, $callbackAfter = null) {
         $form->handleRequest($r);
         if ($save && $form->isSubmitted() && $form->isValid()) {
-            if (\count($callbackBefore) >= 1 && \array_key_exists('method', $callbackBefore)) {
-                $params = array();
-                if (\array_key_exists('params', $callbackBefore)) {
-                    $params = $callbackBefore['params'];
-                    foreach ($params as &$p) {
-                        if (is_string($p)) {
-                            $tmp = \explode('|', $p);
-                            if (count($tmp) > 1) {
-                                $p = \call_user_func_array(array($form->getData(), $tmp[1]), $params);
-                            }
-                        }
-                    }
-                }
-                \call_user_func_array(array($form->getData(), $callbackBefore['method']), $params);
-            }
+            /*
+              if (\count($callbackBefore) >= 1 && \array_key_exists('method', $callbackBefore)) {
+              $params = array();
+              if (\array_key_exists('params', $callbackBefore)) {
+              $params = $callbackBefore['params'];
+              foreach ($params as &$p) {
+              if (is_string($p)) {
+              $tmp = \explode('|', $p);
+              if (count($tmp) > 1) {
+              $p = \call_user_func_array(array($form->getData(), $tmp[1]), $params);
+              }
+              }
+              }
+              }
+              \call_user_func_array(array($form->getData(), $callbackBefore['method']), $params);
+              } */
 
+            $this->callBackExec($form, $callbackBefore);
             $this->persist($form->getData());
-
-            if (\count($callbackAfter) >= 1 && \array_key_exists('method', $callbackAfter)) {
-                \call_user_func_array(array($form->getData(), $callbackAfter['method']), (\array_key_exists('params', $callbackAfter) ? $callbackAfter['params'] : null));
-            }
+            $this->callBackExec($form, $callbackAfter);
 
             return true;
         } else if ($form->isSubmitted() && !$form->isValid())
             return false;
 
         return null;
+    }
+
+    private function callBackExec($form, $callback) {
+        if (\count($callback) >= 1 && \array_key_exists('method', $callback)) {
+            $params = array();
+            if (\array_key_exists('params', $callback)) {
+                $params = $callback['params'];
+                foreach ($params as &$p) {
+                    if (is_string($p)) {
+                        $tmp = \explode('|', $p);
+                        if (count($tmp) > 1) {
+                            $p = \call_user_func_array(array($form->getData(), $tmp[1]), $params);
+                        }
+                    }
+                }
+            }
+            \call_user_func_array(array($form->getData(), $callback['method']), $params);
+        }
     }
 
 }
