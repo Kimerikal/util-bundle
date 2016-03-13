@@ -190,4 +190,39 @@ class UtilController extends Controller {
         }
     }
 
+    protected function treeToJson($tree, $object = null, $openAllNodes = false, $hrefPattern = array()) {
+        $data = array();
+        $addHref = \count($hrefPattern) > 0 && isset($hrefPattern['route']) && isset($hrefPattern['params']);
+        foreach ($tree as $node) {
+            $arr = array('id' => $node->getId(), 'text' => $node->getName());
+            if ((!is_null($object) && $object->hasCategory($node->getId()))) {
+                $arr['state'] = array('selected' => true);
+            }
+
+            if ($openAllNodes) {
+                if (isset($arr['state']) && is_array($arr['state']))
+                    $arr['state']['opened'] = true;
+                else
+                    $arr['state'] = array('opened' => true);
+            }
+
+            if ($addHref) {
+                $params = array();
+                foreach ($hrefPattern['params'] as $key => $method) {
+                    $params[$key] = \call_user_func(array($node, $method));
+                }
+                
+                $arr['a_attr'] = array('href' => $this->generateUrl($hrefPattern['route'], $params));
+            }
+
+            if (count($node->getChildren()) > 0) {
+                $arr['children'] = $this->categoriesToJson($node->getChildren(), $object, $openAllNodes, $addHref);
+            }
+
+            $data[] = $arr;
+        }
+
+        return \json_encode($data);
+    }
+
 }
