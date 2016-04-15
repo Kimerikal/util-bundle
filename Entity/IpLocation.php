@@ -20,10 +20,10 @@ final class IpLocation {
         $this->host = $host;
         $this->precion = $precision;
         $this->errors = array();
-        
-        if ($precision == self::PRECISION_CITY) 
+
+        if ($precision == self::PRECISION_CITY)
             $this->getCity();
-        else 
+        else
             $this->getCountry();
     }
 
@@ -41,7 +41,7 @@ final class IpLocation {
     public function getCity() {
         if (empty($this->city))
             $this->city = $this->getResult(self::PRECISION_CITY);
-        
+
         return $this->city;
     }
 
@@ -49,12 +49,12 @@ final class IpLocation {
         $ip = \gethostbyname($this->host);
 
         if (filter_var($ip, FILTER_VALIDATE_IP)) {
-            $xml = \file_get_contents('http://' . self::SERVICE . '/' . self::SERVICE_VERSION . '/' . $precision . '/?key=' . self::API_KEY . '&ip=' . $ip . '&format=' . self::FORMAT);
-            if (\get_magic_quotes_runtime()) {
-                $xml = stripslashes($xml);
-            }
-
             try {
+                $xml = \file_get_contents('http://' . self::SERVICE . '/' . self::SERVICE_VERSION . '/' . $precision . '/?key=' . self::API_KEY . '&ip=' . $ip . '&format=' . self::FORMAT);
+                if (\get_magic_quotes_runtime()) {
+                    $xml = stripslashes($xml);
+                }
+
                 $response = new \SimpleXMLElement($xml);
 
                 foreach ($response as $field => $value) {
@@ -62,7 +62,7 @@ final class IpLocation {
                 }
 
                 return $result;
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $this->errors[] = $e->getMessage();
                 return;
             }
