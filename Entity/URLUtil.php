@@ -27,6 +27,29 @@ class URLUtil {
         return $body;
     }
 
+    public static function postUrl($url, $postParams, $referer = 'http://www.google.com/', $user_agent = self::DEFAULT_AGENT) {
+        header('Content-type: text/html; charset=UTF-8');
+        $handler = curl_init();
+        curl_setopt($handler, CURLOPT_URL, $url);
+        curl_setopt($handler, CURLOPT_POST, true);
+        curl_setopt($handler, CURLOPT_POSTFIELDS, $postParams);
+        curl_setopt($handler, CURLOPT_USERAGENT, $user_agent);
+        curl_setopt($handler, CURLOPT_HEADER, 0);
+        curl_setopt($handler, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($handler, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($handler, CURLOPT_REFERER, $referer);
+        curl_setopt($handler, CURLOPT_CONNECTTIMEOUT, 120);
+        curl_setopt($handler, CURLOPT_TIMEOUT, 120);
+        curl_setopt($handler, CURLOPT_MAXREDIRS, 10);
+        curl_setopt($handler, CURLOPT_ENCODING, "");
+        curl_setopt($handler, CURLOPT_COOKIEFILE, "cookie.txt");
+        curl_setopt($handler, CURLOPT_COOKIEJAR, "cookie.txt");
+        $body = curl_exec($handler);
+        curl_close($handler);
+
+        return $body;
+    }
+
     public static function fetchURL($method, $url, $data = false) {
         $curl = curl_init();
 
