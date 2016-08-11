@@ -211,7 +211,7 @@ class UtilController extends Controller {
                 foreach ($hrefPattern['params'] as $key => $method) {
                     $params[$key] = \call_user_func(array($node, $method));
                 }
-                
+
                 $arr['a_attr'] = array('href' => $this->generateUrl($hrefPattern['route'], $params));
             }
 
@@ -223,6 +223,24 @@ class UtilController extends Controller {
         }
 
         return \json_encode($data);
+    }
+
+    /**
+     * Method to launch a background process. All code below this call 
+     * will be executed on a different "thread".
+     * 
+     * @param type $url --> Target user URL
+     */
+    public function processRedirect($url) {
+        \header('Location: ' . $url);
+        \ob_end_clean();
+        \header("Connection: close");
+        \ignore_user_abort(true);
+        \ob_start();
+        \header("Content-Length: 0");
+        \ob_end_flush();
+        \flush();
+        \session_write_close();
     }
 
 }
