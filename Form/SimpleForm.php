@@ -30,23 +30,28 @@ class SimpleForm extends AbstractType {
             $reflectionProperty = new \ReflectionProperty($this->class, $p->name);
             $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
             if ($fd) {
-                $attrs = array(
-                    'class' => 'form-control' . ($fd->type == 'checkbox' ? ' make-switch' : ''),
-                    'placeholder' => $fd->placeholder,
-                    'nlal' => $fd->newLine,
-                    'bcol' => $fd->col
-                );
-                
-                if ($fd->type == 'decimal') {
-                    $fd->type = 'number';
-                    $attrs['step'] = 'any';
-                }
+                if ($fd->type != 'customForm') {
+                    $attrs = array(
+                        'class' => 'form-control' . ($fd->type == 'checkbox' ? ' make-switch' : ''),
+                        'placeholder' => $fd->placeholder,
+                        'nlal' => $fd->newLine,
+                        'bcol' => $fd->col
+                    );
 
-                $builder->add($p->name, $fd->type, array(
-                    'label' => $fd->label,
-                    'required' => $fd->required,
-                    'attr' => $attrs
-                ));
+                    if ($fd->type == 'decimal') {
+                        $fd->type = 'number';
+                        $attrs['step'] = 'any';
+                    }
+
+                    $builder->add($p->name, $fd->type, array(
+                        'label' => $fd->label,
+                        'required' => $fd->required,
+                        'attr' => $attrs
+                    ));
+                } else {
+                    $class = $fd->className;
+                    $builder->add($p->name, new $class(1, $this->trans));
+                }
             }
         }
     }

@@ -16,4 +16,5 @@ final class FormData extends Annotation {
     public $required = false;
     public $newLine = false;
     public $order = 0;
+    public $className;
 }
