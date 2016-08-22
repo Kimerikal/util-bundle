@@ -6,13 +6,13 @@ class ImgUtil {
 
     const THUMB_WIDTH = 256;
 
-    public static function store($b64Img, $path) {
-        try {
-            $img = str_replace('data:image/png;base64,', '', $b64Img);
-            $img = str_replace(' ', '+', $img);
+    public static function store($b64Img, $path, $filename = '') {
+        try { 
+            $img = \str_replace('data:image/png;base64,', '', $b64Img);
+            $img = \str_replace(' ', '+', $img);
             $data = base64_decode($img);
-            $file = $path . DS . uniqid() . '.jpg';
-            $success = file_put_contents($file, $data);
+            $file = $path . DS . (empty($filename) ? \uniqid() . '.jpg' : $filename);
+            $success = \file_put_contents($file, $data);
 
             if ($success)
                 return $file;
