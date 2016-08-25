@@ -7,7 +7,7 @@ class ImgUtil {
     const THUMB_WIDTH = 256;
 
     public static function store($b64Img, $path, $filename = '') {
-        try { 
+        try {
             $img = \str_replace('data:image/png;base64,', '', $b64Img);
             $img = \str_replace(' ', '+', $img);
             $data = base64_decode($img);
@@ -246,6 +246,26 @@ class ImgUtil {
         imagedestroy($resource);
         @chmod($filename, 0664);
         return $success;
+    }
+
+    public static function crop($src, $x, $y, $width, $height, $targ_w, $targ_h, $newPath = '') {
+        if (empty($newPath))
+            $newPath = $src;
+
+        $img_r = imagecreatefromjpeg($src);
+
+        $dst_r = ImageCreateTrueColor($targ_w, $targ_h);
+
+        imagecopyresampled($dst_r, $img_r, 0, 0, intval($x), intval($y), $targ_w, $targ_h, intval($width), intval($height));
+        self::write(self::imageType($src), $dst_r, $newPath);
+    }
+
+    public static function imageType($src_file) {
+        $size = getimagesize($src_file);
+        if ($size['mime'] == 'image/pjpeg')
+            $size['mime'] = 'image/jpeg';
+
+        return strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
     }
 
 }

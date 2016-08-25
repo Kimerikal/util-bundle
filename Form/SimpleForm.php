@@ -85,22 +85,32 @@ class SimpleForm extends AbstractType {
 
                         foreach ($fd->customAttrs as $key => $value) {
                             if ($key == 'date') {
-                                $attrs['class'] = $attrs['class'] . ' date-picker';
+                                $attrs['class'] .= ' date-picker';
                             }
-                            $attrs[$key] = $value;
+
+                            if (isset($attrs[$key]))
+                                $attrs[$key] .= ' ' . $value;
+                            else
+                                $attrs[$key] = $value;
                         }
                     }
 
                     if ($fd->type == 'decimal') {
                         $fd->type = 'number';
                         $attrs['step'] = 'any';
+                    } else if ($fd->type == 'imagecrop') {
+                        $attrs['class'] .= ' imageCrop';
+                        $fd->type = 'file';
+                        $attrs['imgcrop'] = true;
                     }
 
-                    $builder->add($p->name, $fd->type, array(
-                        'label' => $fd->label,
-                        'required' => $fd->required,
-                        'attr' => $attrs
-                    ));
+                    $bParams = array('required' => $fd->required,
+                        'attr' => $attrs);
+
+                    if ($fd->label && !empty($fd->label))
+                        $bParams['label'] = $fd->label;
+
+                    $builder->add($p->name, $fd->type, $bParams);
                 } else {
                     $class = $fd->className;
                     $builder->add($p->name, new $class(1, $this->trans));
@@ -136,14 +146,12 @@ class SimpleForm extends AbstractType {
         $monthNum = $dateArr[1];
         $year = $dateArr[2];
 
-        $return = $day."-".$monthNum."-".$year;
+        $return = $day . "-" . $monthNum . "-" . $year;
         if ($withHours)
             $return .= " - " . $timeStr;
 
 
         return $return;
     }
-    
-    
 
 }
