@@ -110,6 +110,12 @@ class SimpleForm extends AbstractType {
                     if ($fd->label && !empty($fd->label))
                         $bParams['label'] = $fd->label;
 
+                    if ($fd->type == 'choice' && isset($fd->choiceData) && \count($fd->choiceData) > 0) {
+                        $bParams['choices'] = $fd->choiceData;
+                        $bParams['choices_as_values'] = true;
+                    } else if ($fd->type == 'choice' && (!isset($fd->choiceData) || \count($fd->choiceData) == 0))
+                        continue;
+
                     $builder->add($p->name, $fd->type, $bParams);
                 } else {
                     $class = $fd->className;

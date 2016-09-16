@@ -18,4 +18,5 @@ final class FormData extends Annotation {
     public $order = 0;
     public $className;
     public $customAttrs = array();
+    public $choiceData = array();
 }
