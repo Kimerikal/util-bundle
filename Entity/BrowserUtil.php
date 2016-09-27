@@ -38,7 +38,6 @@ class BrowserUtil {
             'Mozilla' => 'Gecko',
             'MyIE' => 'MyIE',
             'Lynx' => 'Lynx',
-            'Netscape' => '(Mozilla/4\.75)|(Netscape6)|(Mozilla/4\.08)|(Mozilla/4\.5)|(Mozilla/4\.6)|(Mozilla/4\.79)',
             'Konqueror' => 'Konqueror',
             'IE' => '(MSIE [4-9]+\.[0-9]+)'
         );
@@ -65,6 +64,7 @@ class BrowserUtil {
     public function getBrowser($user_agent) {
         if (empty($this->browser)) {
             foreach ($this->browserArr as $navegador => $pattern) {
+                \error_log('MODIFIER: '.$pattern);
                 if (preg_match("/" . $pattern . "/i", $user_agent)) {
                     $this->browser = $navegador;
                     break;

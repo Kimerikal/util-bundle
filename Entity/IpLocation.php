@@ -1,6 +1,7 @@
 <?php
 
 namespace Kimerikal\UtilBundle\Entity;
+use Kimerikal\UtilBundle\Entity\URLUtil;
 
 final class IpLocation {
 
@@ -50,7 +51,9 @@ final class IpLocation {
 
         if (filter_var($ip, FILTER_VALIDATE_IP)) {
             try {
-                $xml = \file_get_contents('http://' . self::SERVICE . '/' . self::SERVICE_VERSION . '/' . $precision . '/?key=' . self::API_KEY . '&ip=' . $ip . '&format=' . self::FORMAT);
+                $url = 'https://' . self::SERVICE . '/' . self::SERVICE_VERSION . '/' . $precision . '/?key=' . self::API_KEY . '&ip=' . $ip . '&format=' . self::FORMAT;
+                $xml = URLUtil::getUrl($url);
+                \error_log('XML: '.$xml);
                 if (\get_magic_quotes_runtime()) {
                     $xml = stripslashes($xml);
                 }
