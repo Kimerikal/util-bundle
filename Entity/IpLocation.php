@@ -49,7 +49,6 @@ final class IpLocation {
 
     private function getResult($precision) {
         $ip = \gethostbyname($this->host);
-        $ip = "83.38.59.30";
 
         if (filter_var($ip, FILTER_VALIDATE_IP)) {
             try {
