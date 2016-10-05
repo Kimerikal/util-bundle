@@ -1,6 +1,7 @@
 <?php
 
 namespace Kimerikal\UtilBundle\Entity;
+
 use Kimerikal\UtilBundle\Entity\URLUtil;
 
 final class IpLocation {
@@ -10,7 +11,7 @@ final class IpLocation {
     const PRECISION_COUNTRY = 'ip-country';
     const SERVICE = 'api.ipinfodb.com';
     const SERVICE_VERSION = 'v3';
-    const FORMAT = 'xml';
+    const FORMAT = 'json';
 
     protected $errors;
     protected $precion;
@@ -48,23 +49,15 @@ final class IpLocation {
 
     private function getResult($precision) {
         $ip = \gethostbyname($this->host);
+        $ip = "83.38.59.30";
 
         if (filter_var($ip, FILTER_VALIDATE_IP)) {
             try {
                 $url = 'https://' . self::SERVICE . '/' . self::SERVICE_VERSION . '/' . $precision . '/?key=' . self::API_KEY . '&ip=' . $ip . '&format=' . self::FORMAT;
-                $xml = URLUtil::getUrl($url);
-                \error_log('XML: '.$xml);
-                if (\get_magic_quotes_runtime()) {
-                    $xml = stripslashes($xml);
-                }
+                $json = URLUtil::getUrl($url);
 
-                $response = new \SimpleXMLElement($xml);
-
-                foreach ($response as $field => $value) {
-                    $result[(string) $field] = (string) $value;
-                }
-
-                return $result;
+                if ($json)
+                    return \json_decode($json, true);
             } catch (\Exception $e) {
                 $this->errors[] = $e->getMessage();
                 return;
