@@ -49,7 +49,7 @@ class TimeUtil {
         $time = \time() - $time;
         if (!self::isPast($timeStr, 'Y-m-d'))
             $time = \abs($time);
-        
+
         $plurals = array('mes' => 'meses');
         $tokens = array(
             31536000 => 'año',
@@ -114,7 +114,12 @@ class TimeUtil {
     }
 
     public static function isToday($dateStr, $fromFormat = 'Y-m-d') {
-        $date = \DateTime::createFromFormat($fromFormat, $dateStr);
+        $date = null;
+        if (is_string($dateStr))
+            $date = \DateTime::createFromFormat($fromFormat, $dateStr);
+        else 
+            $date = $dateStr;
+        
         $today = new \DateTime("now");
         if ($date == $today)
             return true;
