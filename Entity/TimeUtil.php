@@ -121,7 +121,7 @@ class TimeUtil {
             $date = $dateStr;
         
         $today = new \DateTime("now");
-        if ($date == $today)
+        if ($date->format('Y-m-d') == $today->format('Y-m-d'))
             return true;
 
         return false;
