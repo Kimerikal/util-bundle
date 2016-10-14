@@ -64,7 +64,6 @@ class BrowserUtil {
     public function getBrowser($user_agent) {
         if (empty($this->browser)) {
             foreach ($this->browserArr as $navegador => $pattern) {
-                \error_log('MODIFIER: '.$pattern);
                 if (preg_match("/" . $pattern . "/i", $user_agent)) {
                     $this->browser = $navegador;
                     break;
