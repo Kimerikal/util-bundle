@@ -118,7 +118,7 @@ class TimeUtil {
         if (is_string($dateStr))
             $date = \DateTime::createFromFormat($fromFormat, $dateStr);
         else 
-            $date = $dateStr;
+            $date = $dateStr; 
         
         $today = new \DateTime("now"); 
         if ($date->format('Y-m-d') == $today->format('Y-m-d'))
