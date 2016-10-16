@@ -114,7 +114,7 @@ class TimeUtil {
     }
 
     public static function isToday($dateStr, $fromFormat = 'Y-m-d') {
-        $date = null;
+        $date = null; 
         if (is_string($dateStr))
             $date = \DateTime::createFromFormat($fromFormat, $dateStr);
         else 
