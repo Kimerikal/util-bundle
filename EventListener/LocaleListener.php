@@ -20,6 +20,10 @@ class LocaleListener implements EventSubscriberInterface {
     }
 
     public function onKernelController(FilterControllerEvent $event) {
+        if (!$event->isMasterRequest()) {
+            return;
+        }
+        
         $controller = $event->getController();
 
         if (!is_array($controller)) {
@@ -38,6 +42,10 @@ class LocaleListener implements EventSubscriberInterface {
     }
 
     public function onKernelRequest(GetResponseEvent $event) {
+        if (!$event->isMasterRequest()) {
+            return;
+        }
+
         $request = $event->getRequest();
         if (!$request->hasPreviousSession()) {
             return;
