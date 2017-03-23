@@ -81,9 +81,9 @@ class ImgUtil {
         $png = false;
 
         try {
-            $img = imagecreatefromjpeg("{$file}");
+            $img = imagecreatefromjpeg($file);
         } catch (\Exception $e) {
-            $img = imagecreatefrompng("{$file}");
+            $img = imagecreatefrompng($file);
             $png = true;
         }
 
