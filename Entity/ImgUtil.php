@@ -79,6 +79,7 @@ class ImgUtil {
 
         // Cargamos la imagen y comprobamos el tamaÃƒÂ±o
         $png = false;
+        $img = null;
 
         try {
             if (self::isJpeg($file))
