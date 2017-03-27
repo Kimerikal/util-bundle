@@ -81,7 +81,12 @@ class ImgUtil {
         $png = false;
 
         try {
-            $img = imagecreatefromjpeg($file);
+            if (self::isJpeg($file))
+                $img = imagecreatefromjpeg($file);
+            else if (self::isPng($file)) {
+                $img = imagecreatefrompng($file);
+                $png = true;
+            }
         } catch (\Exception $e) {
             try {
                 $img = imagecreatefrompng($file);
@@ -270,6 +275,14 @@ class ImgUtil {
             $size['mime'] = 'image/jpeg';
 
         return strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
+    }
+
+    public static function isJpeg(&$pict) {
+        return (\bin2hex($pict[0]) == 'ff' && \bin2hex($pict[1]) == 'd8');
+    }
+
+    public static function isPng(&$pict) {
+        return (\bin2hex($pict[0]) == '89' && $pict[1] == 'P' && $pict[2] == 'N' && $pict[3] == 'G');
     }
 
 }
