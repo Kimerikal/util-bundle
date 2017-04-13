@@ -230,7 +230,7 @@ class UtilController extends Controller {
             }
 
             if (count($node->getChildren()) > 0) {
-                $arr['children'] = $this->categoriesToJson($node->getChildren(), $object, $openAllNodes, $addHref);
+                $arr['children'] = $this->treeToJson($node->getChildren(), $object, $openAllNodes, $addHref);
             }
 
             $data[] = $arr;
