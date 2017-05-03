@@ -19,4 +19,8 @@ final class FormData extends Annotation {
     public $className;
     public $customAttrs = array();
     public $choiceData = array();
+    public $events = array();
+    public $emptyValue = '';
+    public $dataUrl = '';
+    public $mapped = true;
 }

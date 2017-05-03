@@ -25,6 +25,9 @@ class SimpleForm extends AbstractType {
      * @param array $options
      */
     public function buildForm(FormBuilderInterface $builder, array $options) {
+        /**
+         * Event Listener
+         */
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $reader = new AnnotationReader();
             $reflectionClass = new \ReflectionClass($this->class);
@@ -46,10 +49,36 @@ class SimpleForm extends AbstractType {
                                 }
                             }
                         }
+                    } else if ($fd->type == 'ajax_select') {
+                        $obj = $event->getData();
+                        if (empty($obj[$p->name]))
+                            return;
+                        $form = $event->getForm();
+                        $child = $form->get($p->name);
+                        $data = $child->getData();
+                        $myOptions = $child->getConfig()->getOptions();
+                        $name = $child->getName();
+
+                        $choices = array($obj[$name] => $obj[$name]);
+                        if ($data instanceOf \Doctrine\ORM\PersistentCollection) {
+                            $data = $data->toArray();
+                        }
+                        if ($data != null) {
+                            if (is_array($data)) {
+                                foreach ($data as $entity) {
+                                    $choices[] = $entity;
+                                }
+                            } else {
+                                $choices[] = $data;
+                            }
+                        }
+
+                        $form->add($name, 'ajax_select', array('choices' => $choices, 'label' => $myOptions['label'], 'attr' => $myOptions['attr'], 'route' => $myOptions['route']));
                     }
                 }
             }
         });
+        /* FIN EVENT LISTENER */
 
         $reader = new AnnotationReader();
         $reflectionClass = new \ReflectionClass($this->class);
@@ -58,6 +87,12 @@ class SimpleForm extends AbstractType {
             $reflectionProperty = new \ReflectionProperty($this->class, $p->name);
             $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
             if ($fd) {
+                if (isset($fd->events) && \count($fd->events) > 0) {
+                    foreach ($fd->events as $event) {
+                        $builder->addEventSubscriber(new $event());
+                    }
+                }
+
                 if ($fd->type != 'customForm') {
                     $attrs = array(
                         'class' => 'form-control' . ($fd->type == 'checkbox' ? ' make-switch' : ''),
@@ -65,6 +100,8 @@ class SimpleForm extends AbstractType {
                         'nlal' => $fd->newLine,
                         'bcol' => $fd->col
                     );
+
+                    $bParams = array('required' => $fd->required, 'mapped' => $fd->mapped);
 
                     if (!empty($fd->customAttrs)) {
                         $obj = $options['data'];
@@ -79,7 +116,7 @@ class SimpleForm extends AbstractType {
                             $val = $obj->$method();
                         }
 
-                        if (\get_class($val) == 'DateTime') {
+                        if (!is_string($val) && \get_class($val) == 'DateTime') {
                             $obj->$setMethod($this->dateToStr($val));
                         }
 
@@ -102,21 +139,31 @@ class SimpleForm extends AbstractType {
                         $attrs['class'] .= ' imageCrop';
                         $fd->type = 'file';
                         $attrs['imgcrop'] = true;
+                    } else if ($fd->type == 'ajax_select' && isset($fd->dataUrl)) {
+                        $bParams['route'] = $fd->dataUrl;
                     }
 
-                    $bParams = array('required' => $fd->required,
-                        'attr' => $attrs);
+                    if (!empty($fd->className))
+                        $attrs['class'] .= ' ' . $fd->className;
+
+
+                    $bParams['attr'] = $attrs;
 
                     if ($fd->label && !empty($fd->label))
                         $bParams['label'] = $fd->label;
 
-                    if ($fd->type == 'choice' && isset($fd->choiceData) && \count($fd->choiceData) > 0) {
+                    if ($fd->type == 'choice') {
                         $bParams['choices'] = $fd->choiceData;
                         $bParams['choices_as_values'] = true;
-                    } else if ($fd->type == 'choice' && (!isset($fd->choiceData) || \count($fd->choiceData) == 0))
-                        continue;
+                        if (isset($fd->emptyValue) && !empty($fd->emptyValue))
+                            $bParams['empty_value'] = $fd->emptyValue;
+                    }
 
                     $builder->add($p->name, $fd->type, $bParams);
+
+                    /* if ($fd->type == 'ajax-select' && isset($fd->dataUrl)) {
+                      $builder->get($p->name)->resetViewTransformers();
+                      } */
                 } else {
                     $class = $fd->className;
                     $builder->add($p->name, new $class(1, $this->trans));

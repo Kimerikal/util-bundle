@@ -170,7 +170,7 @@ class UtilController extends Controller {
             if (\method_exists($obj, 'beforeSave')) {
                 $obj->beforeSave();
             }
-            
+
             $this->persist($obj);
             if (\method_exists($obj, 'afterSave')) {
                 if ($obj->afterSave() == 2) {
@@ -204,7 +204,7 @@ class UtilController extends Controller {
         }
     }
 
-    protected function treeToJson($tree, $object = null, $openAllNodes = false, $hrefPattern = array()) {
+    protected function treeToJson($tree, $object = null, $openAllNodes = false, $hrefPattern = array(), $isSon = false) {
         $data = array();
         $addHref = \count($hrefPattern) > 0 && isset($hrefPattern['route']) && isset($hrefPattern['params']);
         foreach ($tree as $node) {
@@ -230,13 +230,16 @@ class UtilController extends Controller {
             }
 
             if (count($node->getChildren()) > 0) {
-                $arr['children'] = $this->treeToJson($node->getChildren(), $object, $openAllNodes, $addHref);
+                $arr['children'] = $this->treeToJson($node->getChildren(), $object, $openAllNodes, $addHref, true);
             }
 
             $data[] = $arr;
         }
 
-        return \json_encode($data);
+        if (!$isSon)
+            return \json_encode($data);
+        else
+            return $data;
     }
 
     /**
