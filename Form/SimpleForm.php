@@ -155,15 +155,16 @@ class SimpleForm extends AbstractType {
                     if ($fd->type == 'choice') {
                         $bParams['choices'] = $fd->choiceData;
                         $bParams['choices_as_values'] = true;
-                        if (isset($fd->emptyValue) && !empty($fd->emptyValue))
-                            $bParams['empty_value'] = $fd->emptyValue;
+                    }
+
+                    if (isset($fd->emptyValue) && !empty($fd->emptyValue)) {
+                        if ($fd->type == 'date' && $fd->emptyValue == 'now');
+                            $fd->emptyValue = $this->dateToStr(new \DateTime());
+                        $bParams['empty_data'] = $fd->emptyValue;
+                        $bParams['data'] = $fd->emptyValue;
                     }
 
                     $builder->add($p->name, $fd->type, $bParams);
-
-                    /* if ($fd->type == 'ajax-select' && isset($fd->dataUrl)) {
-                      $builder->get($p->name)->resetViewTransformers();
-                      } */
                 } else {
                     $class = $fd->className;
                     $builder->add($p->name, new $class(1, $this->trans));

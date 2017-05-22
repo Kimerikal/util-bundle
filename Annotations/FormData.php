@@ -23,4 +23,5 @@ final class FormData extends Annotation {
     public $emptyValue = '';
     public $dataUrl = '';
     public $mapped = true;
+    public $jsonGroup = null;
 }
