@@ -153,13 +153,21 @@ class SimpleForm extends AbstractType {
                         $bParams['label'] = $fd->label;
 
                     if ($fd->type == 'choice') {
-                        $bParams['choices'] = $fd->choiceData;
+                        if (!empty($fd->choiceData))
+                            $bParams['choices'] = $fd->choiceData;
+
                         $bParams['choices_as_values'] = true;
                     }
 
+                    if ($fd->type == 'entity' && !empty($fd->class) && !empty($fd->choiceLabel)) {
+                        $bParams['class'] = $fd->class;
+                        $bParams['choice_label'] = $fd->choiceLabel;
+                    }
+
                     if (isset($fd->emptyValue) && !empty($fd->emptyValue)) {
-                        if ($fd->type == 'date' && $fd->emptyValue == 'now');
-                            $fd->emptyValue = $this->dateToStr(new \DateTime());
+                        if ($fd->type == 'date' && $fd->emptyValue == 'now')
+                            ;
+                        $fd->emptyValue = $this->dateToStr(new \DateTime());
                         $bParams['empty_data'] = $fd->emptyValue;
                         $bParams['data'] = $fd->emptyValue;
                     }
