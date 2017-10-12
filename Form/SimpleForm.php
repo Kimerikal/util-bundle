@@ -10,6 +10,7 @@ use Kimerikal\UtilBundle\Entity\TimeUtil;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Tetranz\Select2EntityBundle\Form\Type\Select2EntityType;
 
 class SimpleForm extends AbstractType {
 
@@ -110,6 +111,7 @@ class SimpleForm extends AbstractType {
                         'bcol' => $fd->col
                     );
 
+
                     $bParams = array('required' => $fd->required, 'mapped' => $fd->mapped);
 
                     if (!empty($fd->customAttrs)) {
@@ -148,8 +150,9 @@ class SimpleForm extends AbstractType {
                         $attrs['class'] .= ' imageCrop';
                         $fd->type = 'file';
                         $attrs['imgcrop'] = true;
-                    } else if ($fd->type == 'ajax_select' && isset($fd->dataUrl)) {
+                    } else if ($fd->type == 'ajax_select' && isset($fd->dataUrl) && isset($fd->targetObject)) {
                         $bParams['route'] = $fd->dataUrl;
+                        $bParams['target_object'] = $fd->targetObject;
                     }
 
                     if (!empty($fd->className))

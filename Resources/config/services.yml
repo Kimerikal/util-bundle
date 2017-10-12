@@ -9,5 +9,6 @@ services:
         class: Kimerikal\UtilBundle\Form\Type\AjaxSelectType
         arguments:
             - '@router'
+            - '@doctrine.orm.entity_manager'
         tags:
             -  { name: form.type }

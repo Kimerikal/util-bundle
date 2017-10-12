@@ -9,6 +9,7 @@ use Doctrine\Common\Annotations\Annotation;
  * @Target({"PROPERTY"})
  */
 final class FormData extends Annotation {
+
     public $type;
     public $label;
     public $col = 12;
@@ -22,8 +23,10 @@ final class FormData extends Annotation {
     public $events = array();
     public $emptyValue = '';
     public $dataUrl = '';
+    public $targetObject = '';
     public $mapped = true;
     public $jsonGroup = null;
     public $choiceLabel = null;
     public $class = null;
+
 }
