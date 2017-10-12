@@ -10,7 +10,7 @@
                 {% endfor %}
             </ul>
         {% else %}
-            {%if curVal is defined %}
+            {%if curVal is defined and curVal is not empty %}
                 <select {{ block('widget_attributes') }}>
                     <option value="{{curVal.value}}" selected="selected">{{curVal.text}}</option>
                 </select>
