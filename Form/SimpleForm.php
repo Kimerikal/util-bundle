@@ -176,12 +176,16 @@ class SimpleForm extends AbstractType {
                         $bParams['choice_label'] = $fd->choiceLabel;
                     }
 
+                    if ($fd->type == 'date') {
+                        $fd->type = 'text';
+                        $bParams['attr']['date'] = true;
+                        if (isset($fd->emptyValue) && $fd->emptyValue == 'now')
+                            $fd->emptyValue = $this->dateToStr(new \DateTime());
+                    }
+
                     if (isset($fd->emptyValue) && !empty($fd->emptyValue)) {
-                        if ($fd->type == 'date' && $fd->emptyValue == 'now')
-                            ;
-                        $fd->emptyValue = $this->dateToStr(new \DateTime());
                         $bParams['empty_data'] = $fd->emptyValue;
-                        $bParams['data'] = $fd->emptyValue;
+                        //$bParams['data'] = $fd->emptyValue;
                     }
 
                     $builder->add($p->name, $fd->type, $bParams);
