@@ -13,7 +13,27 @@ class UtilController extends Controller {
     const PUBLIC_ENV = 1;
     const ADMIN_ENV = 2;
 
-    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = array(), $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array()) {
+    protected function setPagination(Request $r, $totalCount, $currentPage, $pageLimit, $extraPageUrl = '') {
+        if (!empty($currentPage) && !empty($totalCount) && !empty($pageLimit)
+                && $totalCount > $pageLimit) {
+            $firstResult = (($currentPage - 1) * $pageLimit) + 1;
+            $lastResult = (($firstResult + $pageLimit) - 1);
+            if ($lastResult > $totalCount)
+                $lastResult = $totalCount;
+
+            return array(
+                'curPage' => $currentPage,
+                'totalPages' => ceil($totalCount / $pageLimit),
+                'baseUrl' => str_replace($extraPageUrl . $currentPage, '', $r->getUri()),
+                'extraPageUrl' => $extraPageUrl,
+                'sentence' => 'Mostrando del ' . $firstResult . ' al ' . $lastResult . ' de ' . $totalCount
+            );
+        }
+
+        return null;
+    }
+
+    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = array(), $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null) {
         $params = array(
             'list' => $list,
             'currentPage' => $currentPage,
@@ -27,7 +47,8 @@ class UtilController extends Controller {
             'rowTitle' => $rowTitleMethod,
             'breadcrumbs' => $breadcrumbs,
             'rowOptions' => $rowOptions,
-            'rowData' => $rowData
+            'rowData' => $rowData,
+            'pagination' => $pagination
         );
 
         return $this->render('AdminBundle:Common:simple-list-page.html.twig', $params);
