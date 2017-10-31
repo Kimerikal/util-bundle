@@ -33,7 +33,7 @@ class UtilController extends Controller {
         return null;
     }
 
-    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = array(), $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null) {
+    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = array(), $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '') {
         $params = array(
             'list' => $list,
             'currentPage' => $currentPage,
@@ -48,7 +48,8 @@ class UtilController extends Controller {
             'breadcrumbs' => $breadcrumbs,
             'rowOptions' => $rowOptions,
             'rowData' => $rowData,
-            'pagination' => $pagination
+            'pagination' => $pagination,
+            'filtersHtml' => $filtersHtml
         );
 
         return $this->render('AdminBundle:Common:simple-list-page.html.twig', $params);
