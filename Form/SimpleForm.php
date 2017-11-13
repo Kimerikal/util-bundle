@@ -54,7 +54,7 @@ class SimpleForm extends AbstractType {
                     } else if ($fd->type == 'ajax_select') {
                         $obj = $event->getData();
                         if (empty($obj[$p->name]))
-                            return;
+                            continue;
                         $form = $event->getForm();
                         $child = $form->get($p->name);
                         $data = $child->getData();
