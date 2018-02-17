@@ -1,0 +1,12 @@
+{% block json_array_widget %}
+    {% spaceless %}
+        <textarea {{ block('widget_attributes') }}></textarea>
+        {%if showData is defined and showData is not empty %}
+            <ul>
+                {% for val in showData %}
+                    <li>{{val}}</li>
+                {% endfor %}
+            </ul>
+        {%endif%}
+    {% endspaceless %}
+{% endblock %}

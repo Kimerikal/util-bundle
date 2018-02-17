@@ -28,5 +28,6 @@ final class FormData extends Annotation {
     public $jsonGroup = null;
     public $choiceLabel = null;
     public $class = null;
+    public $format = null;
 
 }
