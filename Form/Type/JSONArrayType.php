@@ -28,22 +28,21 @@ class JSONArrayType extends AbstractType {
         $builder->setAttribute('attr', array_merge($options['attr'], array('class' => 'form-control')));
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $object = $event->getForm()->getParent()->getData();
-            //$data = $event->getParent()->getData();
             if (is_object($object)) {
                 $fieldName = $event->getForm()->getName();
                 $method = 'formatNew' . ucfirst($fieldName);
-                //$getMethod = 'set' . ucfirst($fieldName);
                 $origData = array();
                 $newData = $event->getData();
                 $oldData = $this->em->getUnitOfWork()->getOriginalEntityData($object);
                 if (!empty($oldData))
                     $origData = $oldData[$fieldName];
 
-                if (method_exists($object, $method)) {
-                    $newdata = call_user_func_array(array($object, $method), array($newData));
+                if (!empty($newData) && method_exists($object, $method)) {
+                    $newData = call_user_func_array(array($object, $method), array($newData));
                 }
 
-                \array_push($origData, $newdata);
+                if (!empty($newData))
+                    \array_push($origData, $newData);
 
                 $event->setData($origData);
             }

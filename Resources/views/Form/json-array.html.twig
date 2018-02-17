@@ -1,7 +1,7 @@
 {% block json_array_widget %}
     {% spaceless %}
         {% if inputType == 'textarea' %}
-        <textarea {{ block('widget_attributes') }}></textarea>
+            <textarea {{ block('widget_attributes') }}></textarea>
         {% else %}
             <input type="{{inputType}}" {{ block('widget_attributes') }}>
         {% endif %}
@@ -9,7 +9,7 @@
             <ul>
                 {% for val in showData %}
                     <li>{{val}}</li>
-                {% endfor %}
+                    {% endfor %}
             </ul>
         {%endif%}
     {% endspaceless %}
