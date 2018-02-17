@@ -1,6 +1,10 @@
 {% block json_array_widget %}
     {% spaceless %}
+        {% if inputType == 'textarea' %}
         <textarea {{ block('widget_attributes') }}></textarea>
+        {% else %}
+            <input type="{{inputType}}" {{ block('widget_attributes') }}>
+        {% endif %}
         {%if showData is defined and showData is not empty %}
             <ul>
                 {% for val in showData %}

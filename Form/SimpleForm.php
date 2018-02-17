@@ -153,8 +153,11 @@ class SimpleForm extends AbstractType {
                     } else if ($fd->type == 'ajax_select' && isset($fd->dataUrl) && isset($fd->targetObject)) {
                         $bParams['route'] = $fd->dataUrl;
                         $bParams['target_object'] = $fd->targetObject;
-                    } else if ($fd->type == 'json_array' && isset($fd->format)) {
-                        $bParams['format'] = $fd->format;
+                    } else if ($fd->type == 'json_array') {
+                        if (isset($fd->format))
+                            $bParams['format'] = $fd->format;
+                        if (isset($fd->inputType))
+                            $bParams['inputType'] = $fd->inputType;
                     }
 
                     if (!empty($fd->className))

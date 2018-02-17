@@ -15,5 +15,7 @@ services:
             
     json_array:
         class: Kimerikal\UtilBundle\Form\Type\JSONArrayType
+        arguments:
+            - '@doctrine.orm.entity_manager'
         tags:
             -  { name: form.type }
