@@ -96,13 +96,13 @@ class SimpleForm extends AbstractType {
                 }
 
                 if ($fd->type == 'entityCollection') {
-                    $r = new \ReflectionClass("Kimerikal\AccountBundle\Form\DeliveryItemType");
+                  /*  $r = new \ReflectionClass("Kimerikal\AccountBundle\Form\DeliveryItemType");
                     $obj = $r->newInstanceArgs(array($fd->class, $this->trans));
                     $l = \Kimerikal\AccountBundle\Entity\DeliveryItem::class;
                     $builder->add($p->name, 'collection', array(
                         'type' => \Kimerikal\AccountBundle\Form\DeliveryItemType::class,
                         'allow_add' => true
-                    ));
+                    ));*/
                 } else if ($fd->type != 'customForm') {
                     $attrs = array(
                         'class' => 'form-control' . ($fd->type == 'checkbox' ? ' make-switch' : ''),
