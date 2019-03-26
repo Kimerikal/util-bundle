@@ -96,13 +96,13 @@ class SimpleForm extends AbstractType {
                 }
 
                 if ($fd->type == 'entityCollection') {
-                  /*  $r = new \ReflectionClass("Kimerikal\AccountBundle\Form\DeliveryItemType");
-                    $obj = $r->newInstanceArgs(array($fd->class, $this->trans));
-                    $l = \Kimerikal\AccountBundle\Entity\DeliveryItem::class;
-                    $builder->add($p->name, 'collection', array(
-                        'type' => \Kimerikal\AccountBundle\Form\DeliveryItemType::class,
-                        'allow_add' => true
-                    ));*/
+                    /*  $r = new \ReflectionClass("Kimerikal\AccountBundle\Form\DeliveryItemType");
+                      $obj = $r->newInstanceArgs(array($fd->class, $this->trans));
+                      $l = \Kimerikal\AccountBundle\Entity\DeliveryItem::class;
+                      $builder->add($p->name, 'collection', array(
+                      'type' => \Kimerikal\AccountBundle\Form\DeliveryItemType::class,
+                      'allow_add' => true
+                      )); */
                 } else if ($fd->type != 'customForm') {
                     $attrs = array(
                         'class' => 'form-control' . ($fd->type == 'checkbox' ? ' make-switch' : ''),
@@ -158,6 +158,8 @@ class SimpleForm extends AbstractType {
                             $bParams['format'] = $fd->format;
                         if (isset($fd->inputType))
                             $bParams['inputType'] = $fd->inputType;
+                    } else if ($fd->type == 'tree_select' && isset($fd->targetObject)) {
+                        $bParams['target_object'] = $fd->targetObject;
                     }
 
                     if (!empty($fd->className))
@@ -179,6 +181,11 @@ class SimpleForm extends AbstractType {
                     if ($fd->type == 'entity' && !empty($fd->class) && !empty($fd->choiceLabel)) {
                         $bParams['class'] = $fd->class;
                         $bParams['choice_label'] = $fd->choiceLabel;
+
+                        if (isset($attrs['multiple']) && $attrs['multiple'])
+                            $bParams['multiple'] = true;
+                        if (isset($attrs['expanded']) && $attrs['expanded'])
+                            $bParams['expanded'] = true;
                     }
 
                     if ($fd->type == 'date') {

@@ -33,7 +33,7 @@ class UtilController extends Controller {
         return null;
     }
 
-    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = array(), $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null) {
+    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = array(), $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null, $modalsHtml = '', $batchActionsHtml = '', $customJS = '', $customCSS = '', $multiOnChangeURL = '', $ajaxSearchURL = '', $ajaxListSearchURL = '', $orderListHtml = '') {
         $params = array(
             'list' => $list,
             'currentPage' => $currentPage,
@@ -49,7 +49,15 @@ class UtilController extends Controller {
             'rowOptions' => $rowOptions,
             'rowData' => $rowData,
             'pagination' => $pagination,
-            'filtersHtml' => $filtersHtml
+            'filtersHtml' => $filtersHtml,
+            'modalsHtml' => $modalsHtml,
+            'batchActionsHtml' => $batchActionsHtml,
+            'customJS' => $customJS,
+            'customCSS' => $customCSS,
+            'multiOnChangeURL' => $multiOnChangeURL,
+            'ajaxSearchURL' => $ajaxSearchURL,
+            'orderListHtml' => $orderListHtml,
+            'ajaxListSearchURL' => $ajaxListSearchURL
         );
         
         if ($newElement && count($newElement) == 2) 
@@ -229,43 +237,7 @@ class UtilController extends Controller {
         }
     }
 
-    protected function treeToJson($tree, $object = null, $openAllNodes = false, $hrefPattern = array(), $isSon = false) {
-        $data = array();
-        $addHref = \count($hrefPattern) > 0 && isset($hrefPattern['route']) && isset($hrefPattern['params']);
-        foreach ($tree as $node) {
-            $arr = array('id' => $node->getId(), 'text' => $node->getName());
-            if ((!is_null($object) && $object->hasCategory($node->getId()))) {
-                $arr['state'] = array('selected' => true);
-            }
-
-            if ($openAllNodes) {
-                if (isset($arr['state']) && is_array($arr['state']))
-                    $arr['state']['opened'] = true;
-                else
-                    $arr['state'] = array('opened' => true);
-            }
-
-            if ($addHref) {
-                $params = array();
-                foreach ($hrefPattern['params'] as $key => $method) {
-                    $params[$key] = \call_user_func(array($node, $method));
-                }
-
-                $arr['a_attr'] = array('href' => $this->generateUrl($hrefPattern['route'], $params));
-            }
-
-            if (count($node->getChildren()) > 0) {
-                $arr['children'] = $this->treeToJson($node->getChildren(), $object, $openAllNodes, $addHref, true);
-            }
-
-            $data[] = $arr;
-        }
-
-        if (!$isSon)
-            return \json_encode($data);
-        else
-            return $data;
-    }
+   
 
     /**
      * Method to launch a background process. All code below this call 

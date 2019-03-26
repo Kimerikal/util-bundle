@@ -19,3 +19,10 @@ services:
             - '@doctrine.orm.entity_manager'
         tags:
             -  { name: form.type }
+            
+    tree_select:
+        class: Kimerikal\UtilBundle\Form\Type\TreeSelectType
+        arguments:
+            - '@doctrine.orm.entity_manager'
+        tags:
+            -  { name: form.type }
