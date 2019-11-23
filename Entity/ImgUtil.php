@@ -17,7 +17,7 @@ class ImgUtil {
             if ($success)
                 return $file;
         } catch (Exception $e) {
-            
+
         }
         return false;
     }
@@ -82,12 +82,7 @@ class ImgUtil {
         $img = null;
 
         try {
-            if (self::isJpeg($file))
-                $img = imagecreatefromjpeg($file);
-            else if (self::isPng($file)) {
-                $img = imagecreatefrompng($file);
-                $png = true;
-            }
+            $img = imagecreatefromjpeg($file);
         } catch (\Exception $e) {
             try {
                 $img = imagecreatefrompng($file);
@@ -98,7 +93,7 @@ class ImgUtil {
         }
 
         if (!$img)
-            return;
+            return null;
 
         $width = imagesx($img);
         $height = imagesy($img);
@@ -157,7 +152,7 @@ class ImgUtil {
 
     /**
      * FunciÃ³n para pasar una imagen png a jpg.
-     * 
+     *
      * @param type $originalFile
      * @param type $outputFile
      * @param type $quality -- NÃºmero entre 0 (mejor compresiÃ³n) y 100 (mejor calidad).
