@@ -12,6 +12,13 @@ services:
             - '@doctrine.orm.entity_manager'
         tags:
             -  { name: form.type }
+    entity_ajax_select:
+        class: Kimerikal\UtilBundle\Form\Type\EntityAjaxSelectType
+        arguments:
+            - '@router'
+            - '@doctrine.orm.entity_manager'
+        tags:
+            -  { name: form.type }
             
     json_array:
         class: Kimerikal\UtilBundle\Form\Type\JSONArrayType

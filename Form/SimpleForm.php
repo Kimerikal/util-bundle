@@ -16,10 +16,12 @@ class SimpleForm extends AbstractType {
 
     private $trans;
     private $class;
+    private $group;
 
-    public function __construct($class, $trans) {
+    public function __construct($class, $trans, $group = null) {
         $this->class = $class;
         $this->trans = $trans;
+        $this->group = $group;
     }
 
     /**
@@ -38,6 +40,12 @@ class SimpleForm extends AbstractType {
                 $reflectionProperty = new \ReflectionProperty($this->class, $p->name);
                 $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
                 if ($fd) {
+                    if ($fd->type == 'entity') {
+                        $obj = $event->getData();
+                        if ($obj) {
+
+                        }
+                    }
                     if (!empty($fd->customAttrs)) {
                         $obj = $event->getData();
 
@@ -51,10 +59,11 @@ class SimpleForm extends AbstractType {
                                 }
                             }
                         }
-                    } else if ($fd->type == 'ajax_select') {
+                    } else if ($fd->type == 'ajax_select' /*|| $fd->type == 'entity_ajax_select'*/) {
                         $obj = $event->getData();
                         if (empty($obj[$p->name]))
                             continue;
+
                         $form = $event->getForm();
                         $child = $form->get($p->name);
                         $data = $child->getData();
@@ -75,7 +84,11 @@ class SimpleForm extends AbstractType {
                             }
                         }
 
-                        $form->add($name, 'ajax_select', array('choices' => $choices, 'label' => $myOptions['label'], 'attr' => $myOptions['attr'], 'route' => $myOptions['route']));
+                        $arr = array('choices' => $choices, 'label' => $myOptions['label'], 'attr' => $myOptions['attr'], 'route' => $myOptions['route']);
+                        if ($fd->type == 'entity_ajax_select')
+                            $arr['class'] = $myOptions['target_object'];
+
+                        $form->add($name, $fd->type, $arr);
                     }
                 }
             }
@@ -89,6 +102,13 @@ class SimpleForm extends AbstractType {
             $reflectionProperty = new \ReflectionProperty($this->class, $p->name);
             $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
             if ($fd) {
+                if (!empty($this->group) && isset($fd->groups) && count($fd->groups) > 0 && !in_array($this->group, $fd->groups) && !array_key_exists($this->group, $fd->groups))
+                    continue;
+                else if (isset($fd->groups) && count($fd->groups) > 0 && array_key_exists($this->group, $fd->groups)) {
+                    if (isset($fd->groups[$this->group]->col))
+                        $fd->col = $fd->groups[$this->group]->col;
+                }
+
                 if (isset($fd->events) && \count($fd->events) > 0) {
                     foreach ($fd->events as $event) {
                         $builder->addEventSubscriber(new $event());
@@ -110,7 +130,6 @@ class SimpleForm extends AbstractType {
                         'nlal' => $fd->newLine,
                         'bcol' => $fd->col
                     );
-
 
                     $bParams = array('required' => $fd->required, 'mapped' => $fd->mapped);
 
@@ -153,6 +172,12 @@ class SimpleForm extends AbstractType {
                     } else if ($fd->type == 'ajax_select' && isset($fd->dataUrl) && isset($fd->targetObject)) {
                         $bParams['route'] = $fd->dataUrl;
                         $bParams['target_object'] = $fd->targetObject;
+                       // $bParams['class'] = $fd->targetObject;
+                    } else if ($fd->type == 'entity_ajax_select' && isset($fd->dataUrl) && isset($fd->targetObject)) {
+                        $bParams['route'] = $fd->dataUrl;
+                        $bParams['target_object'] = $fd->targetObject;
+                        $bParams['class'] = $fd->targetObject;
+                        $bParams['choice_label'] = 'id';
                     } else if ($fd->type == 'json_array') {
                         if (isset($fd->format))
                             $bParams['format'] = $fd->format;
@@ -165,9 +190,7 @@ class SimpleForm extends AbstractType {
                     if (!empty($fd->className))
                         $attrs['class'] .= ' ' . $fd->className;
 
-
                     $bParams['attr'] = $attrs;
-
                     if ($fd->label && !empty($fd->label))
                         $bParams['label'] = $fd->label;
 
@@ -175,6 +198,18 @@ class SimpleForm extends AbstractType {
                         if (!empty($fd->choiceData))
                             $bParams['choices'] = $fd->choiceData;
 
+                        $bParams['choices_as_values'] = true;
+                    }
+
+                    if ($fd->type == 'enum') {
+                        $fd->type = 'choice';
+                        $orm = $reader->getPropertyAnnotation($reflectionProperty, 'Doctrine\ORM\Mapping\Column');
+                        $definitions = explode(',', str_replace(' ', '', str_replace('\'', '', str_replace('\"', '',str_replace(')', '', str_ireplace('ENUM(', '', $orm->columnDefinition))))));
+                        $choices = [];
+                        foreach ($definitions as $choice) {
+                            $choices[$choice] = $choice;
+                        }
+                        $bParams['choices'] = $choices;
                         $bParams['choices_as_values'] = true;
                     }
 
@@ -244,4 +279,11 @@ class SimpleForm extends AbstractType {
         return $return;
     }
 
+    public function setGroup($group) {
+        $this->group =$group;
+    }
+
+    public function getGroup() {
+        return $this->group;
+    }
 }

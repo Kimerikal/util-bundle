@@ -30,5 +30,5 @@ final class FormData extends Annotation {
     public $class = null;
     public $format = null;
     public $inputType = null;
-
+    public $groups = array();
 }
