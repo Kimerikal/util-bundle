@@ -78,6 +78,11 @@ class UtilController extends Controller {
         $this->get('session')->getFlashBag()->add($type, $msg);
     }
 
+    protected function mailTemplateSend($title, $content, $to, $subTitle = null) {
+        $view = $this->renderView('AdminBundle:Mail:info-email.html.twig', array('title' => $title, 'subTitle' => $subTitle, 'content' => $content));
+        return $this->mailing($title, array($this->parameter(self::DEFAULT_MAIL) => 'Asociación Celiaca Aragonesa'), $to, $view);
+    }
+
     protected function mailing($subject, $from, $to, $view) {
         $message = \Swift_Message::newInstance();
         $message->setSubject($subject)
