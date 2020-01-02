@@ -146,7 +146,7 @@ class SimpleForm extends AbstractType {
                             $val = $obj->$method();
                         }
 
-                        if (!is_string($val) && \get_class($val) == 'DateTime') {
+                        if ($val && !is_string($val) && \get_class($val) == 'DateTime') {
                             $obj->$setMethod($this->dateToStr($val));
                         }
 
