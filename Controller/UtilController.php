@@ -225,7 +225,7 @@ class UtilController extends Controller {
     }
 
     private function callBackExec($form, $callback) {
-        if (\count($callback) >= 1 && \array_key_exists('method', $callback)) {
+        if (\is_countable($callback) && \count($callback) >= 1 && \array_key_exists('method', $callback)) {
             $params = array();
             if (\array_key_exists('params', $callback)) {
                 $params = $callback['params'];
