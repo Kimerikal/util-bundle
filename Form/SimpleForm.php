@@ -165,6 +165,7 @@ class SimpleForm extends AbstractType {
                     if ($fd->type == 'decimal') {
                         $fd->type = 'number';
                         $attrs['step'] = 'any';
+                        $attrs['scale'] = 2;
                     } else if ($fd->type == 'imagecrop') {
                         $attrs['class'] .= ' imageCrop';
                         $fd->type = 'file';

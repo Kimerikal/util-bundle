@@ -18,7 +18,16 @@ class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder()
     {
         $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('k_util');
+        $rootNode = $treeBuilder->root('k_util')->children()
+            ->arrayNode('entities_url_map')
+            ->prototype('array')
+            ->children()
+            ->scalarNode('url')->end()
+            ->scalarNode('class')->end()
+            ->end()
+            ->end()
+            ->end()
+            ->end();
 
         // Here you should define the parameters that are allowed to
         // configure your bundle. See the documentation linked above for
