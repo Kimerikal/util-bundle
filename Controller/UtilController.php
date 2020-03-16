@@ -2,20 +2,206 @@
 
 namespace Kimerikal\UtilBundle\Controller;
 
+use Doctrine\Common\Annotations\AnnotationReader;
+use Kimerikal\EstablishmentBundle\Entity\Establishment;
+use Kimerikal\UtilBundle\Entity\ExceptionUtil;
+use Kimerikal\UtilBundle\Form\SimpleForm;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Form\Form;
 use Kimerikal\UtilBundle\Entity\StrUtil;
+use Symfony\Component\HttpFoundation\Response;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
-class UtilController extends Controller {
+class UtilController extends Controller
+{
 
     const DEFAULT_MAIL = 'mailer_user';
     const PUBLIC_ENV = 1;
     const ADMIN_ENV = 2;
 
-    protected function setPagination(Request $r, $totalCount, $currentPage, $pageLimit, $extraPageUrl = '') {
+    /**
+     * @Route("/kadmin/autogen/list/{entity}/{page}", name="k_util_kadmin_autogen_list", methods={"GET"}, defaults={"page": 1})
+     * @return Response
+     */
+    public function listAuto(Request $r, $entity, $page = 1)
+    {
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->doctrine()->getClassMetadata($classData);
+        $icon = '';
+        $name = $plural = $entity;
+        $rowOptions = $this->getGenericAnnotations($entityInfo->getName(), $name, $plural, $icon, true);
+
+        if (is_string($page) && $page != "1") {
+            $page = intval(str_replace('pagina-', '', $page));
+        }
+
+        if ($page < 1)
+            $page = 1;
+
+        $breadcrumbs = array(
+            array('name' => 'Lista de ' . $plural),
+        );
+
+        $rowData = $this->annotationListData($entityInfo->getName());
+        //$this->listOptions($rowOptions, $rowData);
+        //$categories = $this->doctrineRepo('EstablishmentBundle:EstablishmentCategory')->findAll();
+        //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
+        $list = $this->doctrineRepo($classData)->loadAll($page);
+        //$orderHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-order.html.twig');
+        //$filterHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-filters.html.twig', array('categories' => $categories));
+        $orderHtml = '';
+        $filterHtml = '';
+        //$actions = $this->renderView('EstablishmentBundle:Tiles:simple-list-batch-actions.html.twig');
+        //$search = 'k_establishment_admin_search'
+        $actions = '';
+        $search = '';
+        //$js = 'bundles/kblog/js/list.js';
+        $js = null;
+
+        return $this->renderSimpleList($list, '__toString', '', '', 'id', $breadcrumbs, 'Lista de ' . $plural, 'list-' . $entity, $icon, 'No se encontraron ' . $plural, 'getWebPath', $rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Nuevo ' . $name], null, $actions, $js, '', '', '', $search, $orderHtml, null);
+    }
+
+    protected function annotationListData($entityName)
+    {
+        $reader = new AnnotationReader();
+        $reflectionClass = new \ReflectionClass($entityName);
+        $props = $reflectionClass->getProperties();
+        $rowData = [];
+        foreach ($props as $p) {
+            $reflectionProperty = new \ReflectionProperty($entityName, $p->name);
+            $data = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\KListRowData');
+            if ($data)
+                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order];
+        }
+
+        $this->sortByOrder($rowData);
+        return $rowData;
+    }
+
+    private function sortByOrder(&$arr)
+    {
+        if (!$arr)
+            return;
+
+        usort($arr, function ($a, $b) {
+            if ($a['order'] == $b['order'])
+                return 0;
+            return ($a['order'] < $b['order']) ? -1 : 1;
+        });
+    }
+
+    /**
+     * @Route("/kadmin/autogen/edit/{entity}/{id}", name="k_util_kadmin_autogen_edit", methods={"POST","GET"}, defaults={"id": 0})
+     * @return Response
+     */
+    public function editAuto(Request $r, $entity, $id = 0)
+    {
+        $object = null;
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->doctrine()->getClassMetadata($classData);
+        if (!empty($id))
+            $object = $this->doctrineRepo($classData)->find($id);
+        else
+            $object = $entityInfo->newInstance();
+
+        $icon = '';
+        $name = $plural = $entity;
+        $this->getGenericAnnotations($entityInfo->getName(), $name, $plural, $icon);
+
+        $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
+        $save = $this->checkSaveForm($r, $form);
+        if ($save) {
+            $this->addFlash('done', $name . ' guardado con éxito.');
+            return $this->redirect($r->headers->get('referer'));
+        } else if ($save === false) {
+            $this->addFlash('error', 'Ocurrió un error inesperado.');
+        }
+
+        $breadcrumbs = [
+            ['name' => 'Lista de ' . $plural, 'url' => $this->generateUrl('k_util_kadmin_autogen_list', ['entity' => $entity])],
+            ['name' => 'Editar ' . $name]
+        ];
+
+        return $this->render('AdminBundle:Common:simple-form-page.html.twig', array('breadcrumbs' => $breadcrumbs, 'title' => !empty($object->getId()) ? 'Editar ' . $name . ': ' . $object->__toString() : 'Nuevo ' . $name, 'icon' => $icon, 'form' => $form->createView(), 'currentPage' => 'edit-' . $entity));
+    }
+
+    /**
+     * @Route("/kadmin/autogen/remove/{entity}/{id}", name="k_util_kadmin_autogen_remove", methods={"POST","GET"})
+     * @return Response
+     */
+    public function delete($entity, $id)
+    {
+        $resp = array('done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.');
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->doctrine()->getClassMetadata($classData);
+        $icon = '';
+        $name = $plural = $entity;
+        $this->getGenericAnnotations($entityInfo->getName(), $name, $plural, $icon);
+        $repo = $this->doctrineRepo($classData);
+        $object = $repo->find($id);
+        if ($object) {
+            try {
+                $repo->delete($object);
+                $resp['done'] = true;
+                $resp['msg'] = $name . ' eliminado con éxito';
+            } catch (\Exception $ex) {
+                ExceptionUtil::logException($ex, 'UtilController::delete');
+            }
+        }
+
+        return new JsonResponse($resp);
+    }
+
+    public function getGenericAnnotations($entityName, &$name, &$plural, &$icon, $returnRowOptions = false)
+    {
+        $reader = new AnnotationReader();
+        $reflClass = new \ReflectionClass($entityName);
+        $generic = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
+
+        if (isset($generic->name) && !empty($generic->name))
+            $name = $plural = $generic->name;
+        if (isset($generic->plural) && !empty($generic->plural))
+            $plural = $generic->plural;
+        if (isset($generic->icon) && !empty($generic->icon))
+            $icon = $generic->icon;
+        if ($returnRowOptions && isset($generic->rowOptions) && !empty($generic->rowOptions))
+            return $this->formatRowOptions($generic->rowOptions);
+    }
+
+    private function formatRowOptions($options)
+    {
+        $rowOptions = [];
+        foreach ($options as $option) {
+            $formatOption = ['aClass' => $option->aClass, 'icon' => $option->icon, 'name' => $option->title];
+            if (!empty($option->routeAuto)) {
+                $auto = explode(':', $option->routeAuto);
+                $formatOption['route'] = 'k_util_kadmin_autogen_' . $auto[0];
+                $formatOption['routeParams'] = ['entity' => $auto[1], 'id' => 'id'];
+            } else {
+                $formatOption['route'] = $option->route;
+                $formatOption['routeMethod'] = $option->routeMethod;
+                $formatOption['routeKey'] = $option->routeKey;
+            }
+
+            if ($option->confirmation)
+                $formatOption['confirmation'] = true;
+            if ($option->ajax)
+                $formatOption['ajax'] = true;
+            if ($option->separator)
+                $formatOption['separator'] = true;
+
+            $rowOptions[] = $formatOption;
+        }
+
+        return $rowOptions;
+    }
+
+    protected function setPagination(Request $r, $totalCount, $currentPage, $pageLimit, $extraPageUrl = '')
+    {
         if (!empty($currentPage) && !empty($totalCount) && !empty($pageLimit)
-                && $totalCount > $pageLimit) {
+            && $totalCount > $pageLimit) {
             $firstResult = (($currentPage - 1) * $pageLimit) + 1;
             $lastResult = (($firstResult + $pageLimit) - 1);
             if ($lastResult > $totalCount)
@@ -33,7 +219,8 @@ class UtilController extends Controller {
         return null;
     }
 
-    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = array(), $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null, $modalsHtml = '', $batchActionsHtml = '', $customJS = '', $customCSS = '', $multiOnChangeURL = '', $ajaxSearchURL = '', $ajaxListSearchURL = '', $orderListHtml = '') {
+    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = [], $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null, $modalsHtml = '', $batchActionsHtml = '', $customJS = '', $customCSS = '', $multiOnChangeURL = '', $ajaxSearchURL = '', $ajaxListSearchURL = '', $orderListHtml = '', $mainRouteUrl = null)
+    {
         $params = array(
             'list' => $list,
             'currentPage' => $currentPage,
@@ -41,6 +228,7 @@ class UtilController extends Controller {
             'pageTitle' => $pageTitle,
             'notFound' => $notFound,
             'image' => $rowImage,
+            'mainRouteUrl' => $mainRouteUrl,
             'rowMainRoute' => $rowMainRoute,
             'rowMainRouteKey' => $rowMainRouteKey,
             'rowMainRouteMethod' => $rowMainRouteMethod,
@@ -59,49 +247,84 @@ class UtilController extends Controller {
             'orderListHtml' => $orderListHtml,
             'ajaxListSearchURL' => $ajaxListSearchURL
         );
-        
-        if ($newElement && count($newElement) == 2) 
+
+        if ($newElement && count($newElement) == 2)
             $params['newElement'] = $newElement;
 
         return $this->render('AdminBundle:Common:simple-list-page.html.twig', $params);
     }
 
-    protected function doctrine() {
+    /**
+     * Maps an Entity with its url name defined en config.yml
+     *
+     * @param $entityClass
+     * @return |null
+     * @throws \Exception
+     */
+    protected function getEntityUrlMap($entityClass)
+    {
+        $map = $this->getParameter('entities_url_map');
+        if (empty($map) || count($map) === 0)
+            throw new \Exception('Bad request');
+
+        $return = null;
+        foreach ($map as $value) {
+            if ($entityClass == $value['url']) {
+                $return = $value['class'];
+                break;
+            }
+        }
+
+        if (!$return)
+            throw new \Exception('Class not found');
+
+        return $return;
+    }
+
+    protected function doctrine()
+    {
         return $this->getDoctrine()->getManager();
     }
 
-    protected function doctrineRepo($repo) {
+    protected function doctrineRepo($repo)
+    {
         return $this->getDoctrine()->getManager()->getRepository($repo);
     }
 
-    protected function flashMsg($type, $msg) {
+    protected function flashMsg($type, $msg)
+    {
         $this->get('session')->getFlashBag()->add($type, $msg);
     }
 
-    protected function mailTemplateSend($title, $content, $to, $subTitle = null) {
+    protected function mailTemplateSend($title, $content, $to, $subTitle = null)
+    {
         $view = $this->renderView('AdminBundle:Mail:info-email.html.twig', array('title' => $title, 'subTitle' => $subTitle, 'content' => $content));
         return $this->mailing($title, array($this->parameter(self::DEFAULT_MAIL) => 'Asociación Celiaca Aragonesa'), $to, $view);
     }
 
-    protected function mailing($subject, $from, $to, $view) {
+    protected function mailing($subject, $from, $to, $view)
+    {
         $message = \Swift_Message::newInstance();
         $message->setSubject($subject)
-                ->setFrom($from)
-                ->setTo($to)
-                ->setBody($view, 'text/html');
+            ->setFrom($from)
+            ->setTo($to)
+            ->setBody($view, 'text/html');
 
         return $this->get('mailer')->send($message);
     }
 
-    protected function parameter($name) {
+    protected function parameter($name)
+    {
         return $this->container->getParameter($name);
     }
 
-    protected function userGranted($role) {
+    protected function userGranted($role)
+    {
         return $this->get('security.context')->isGranted($role);
     }
 
-    protected function getFullUrl(Request $request, $path = '', $clear = array('/app_dev.php')) {
+    protected function getFullUrl(Request $request, $path = '', $clear = array('/app_dev.php'))
+    {
         $base = $request->getUriForPath('');
         $gen = '';
         if (!empty($path))
@@ -120,12 +343,13 @@ class UtilController extends Controller {
     }
 
     /**
-     * 
+     *
      * @param type $key - if empty returns session object
      * @param type $value - if null and not empty $key removes var
      * @return type
      */
-    protected function session($key = null, $value = null) {
+    protected function session($key = null, $value = null)
+    {
         if (!empty($key) && !is_null($value)) {
             $this->get('session')->set($key, $value);
         } else if (!empty($key)) {
@@ -136,16 +360,17 @@ class UtilController extends Controller {
     }
 
     /**
-     * Get global session var value if set, depending on parameters, compare 
+     * Get global session var value if set, depending on parameters, compare
      * or check only if var is set as well.
-     * 
+     *
      * @param type $key - session variable key
      * @param type $default - default value to return
      * @param type $issetOnly - if true just check if variable is set
      * @param type $value - if not null compare session value with this value.
      * @return mixed
      */
-    protected function checkSession($key = null, $default = false, $issetOnly = false, $value = null) {
+    protected function checkSession($key = null, $default = false, $issetOnly = false, $value = null)
+    {
         if (empty($key))
             return null;
 
@@ -165,33 +390,38 @@ class UtilController extends Controller {
         return $this->get('session')->get($key, $default);
     }
 
-    protected function environment() {
+    protected function environment()
+    {
         return $this->checkSession('user_environment', 'frontend');
     }
 
-    protected function setEnvironment($environment = self::ADMIN_ENV) {
+    protected function setEnvironment($environment = self::ADMIN_ENV)
+    {
         return $this->session('user_environment', $environment);
     }
 
-    protected function translator() {
+    protected function translator()
+    {
         return $this->get('translator');
     }
 
-    protected function translate($str) {
+    protected function translate($str)
+    {
         if (empty($str))
             return '';
 
         return $this->translator()->trans($str);
     }
 
-    protected function persist($object, $flush = true) {
+    protected function persist($object, $flush = true)
+    {
         $this->doctrine()->persist($object);
         if ($flush)
             $this->doctrine()->flush();
     }
 
     /**
-     * 
+     *
      * @param Request $r
      * @param Form $form
      * @param boolean $save
@@ -199,22 +429,14 @@ class UtilController extends Controller {
      * @param array $callbackAfter
      * @return boolean
      */
-    protected function checkSaveForm(Request $r, Form &$form, $save = true, $callbackBefore = null, $callbackAfter = null) {
+    protected function checkSaveForm(Request $r, Form &$form, $save = true, $callbackBefore = null, $callbackAfter = null)
+    {
         $form->handleRequest($r);
         if ($save && $form->isSubmitted() && $form->isValid()) {
             $obj = $form->getData();
 
             $this->callBackExec($form, $callbackBefore);
-            if (\method_exists($obj, 'beforeSave')) {
-                $obj->beforeSave();
-            }
-
             $this->persist($obj);
-            if (\method_exists($obj, 'afterSave')) {
-                if ($obj->afterSave() == 2) {
-                    $this->persist($obj);
-                }
-            }
             $this->callBackExec($form, $callbackAfter);
 
             return true;
@@ -224,7 +446,8 @@ class UtilController extends Controller {
         return null;
     }
 
-    private function callBackExec($form, $callback) {
+    private function callBackExec($form, $callback)
+    {
         if (\is_countable($callback) && \count($callback) >= 1 && \array_key_exists('method', $callback)) {
             $params = array();
             if (\array_key_exists('params', $callback)) {
@@ -242,15 +465,15 @@ class UtilController extends Controller {
         }
     }
 
-   
 
     /**
-     * Method to launch a background process. All code below this call 
+     * Method to launch a background process. All code below this call
      * will be executed on a different "thread".
-     * 
+     *
      * @param type $url --> Target user URL
      */
-    public function processRedirect($url) {
+    public function processRedirect($url)
+    {
         \header('Location: ' . $url);
         \ob_end_clean();
         \header("Connection: close");

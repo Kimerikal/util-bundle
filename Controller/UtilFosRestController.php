@@ -50,10 +50,7 @@ class UtilFosRestController extends UtilController
         $status = Response::HTTP_BAD_REQUEST;
 
         try {
-            $entity = $this->getDoctrine()->getManager()->getRepository($this->getEntityUrlMap($entityClass))->save($r->request->all());
-            if (!$entity)
-                $this->returnResponseException(new \Exception('Bad request'), $params, $status);
-
+            $entity = $this->getDoctrine()->getManager()->getRepository($this->getEntityUrlMap($entityClass))->save($r->request->all(), $r->files->all(), $this->get('validator'));
             $this->responseOkDetail($params, $status);
             $params['data'] = $entity instanceof \JsonSerializable ? $entity->jsonSerialize() : $entity;
         } catch (\Exception $e) {
@@ -61,20 +58,6 @@ class UtilFosRestController extends UtilController
         }
 
         return new JsonResponse($params, $status);
-    }
-
-    private function getEntityUrlMap($entityClass)
-    {
-        $map = $this->getParameter('entities_url_map');
-        if (empty($map) || count($map) === 0)
-            throw new \Exception('Bad request');
-
-        foreach ($map as $value) {
-            if ($entityClass == $value['url'])
-                return $value['class'];
-        }
-
-        return $map[$entityClass];
     }
 
     protected function baseUrl()
@@ -117,10 +100,18 @@ class UtilFosRestController extends UtilController
     {
         $status = Response::HTTP_INTERNAL_SERVER_ERROR;
         $params['done'] = false;
-        $params['msg'] = $e->getMessage();
-        error_log($e->getMessage());
+        $params['msg'] = $this->filterExceptionMessage($e->getMessage());
         if (array_key_exists($e->getCode(), Response::$statusTexts))
             $status = $e->getCode();
+    }
+
+    protected function filterExceptionMessage($msg) {
+        if (stripos($msg, 'SQLSTATE[23000]:')) {
+            $tmp = explode('SQLSTATE[23000]:', $msg);
+            return trim($tmp[1]);
+        }
+
+        return $msg;
     }
 
     protected function returnResponseException(\Exception $e, &$params, &$status)

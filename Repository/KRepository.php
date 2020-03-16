@@ -6,42 +6,79 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use http\Exception\BadConversionException;
+use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 use Kimerikal\UtilBundle\Entity\StrUtil;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\ConstraintViolation;
 
 class KRepository extends EntityRepository
 {
     /**
-     *
      * @param array $params
+     * @param null $validator - Service validator
      * @return object|null
-     * @throws \Exception
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
-    public function save(array $params)
+    public function save(array $params, array $files = null, $validator = null)
     {
+        if (empty($params) || count($params) === 0)
+            throw new \Exception('No params found');
+
         $object = null;
         $type = $this->getClassName();
         if (array_key_exists('id', $params))
             $object = $this->getEntityManager()->getRepository($this->getClassName())->find($params['id']);
-        else if (!$object)
+
+        if (!$object)
             $object = new $type;
 
         // TODO support data types: file, array, json_array, entity, entity array
         $meta = $this->getClassMetadata();
-        foreach ($meta->fieldMappings as $key => $data) {
-            if (!array_key_exists($data['columnName'], $params) || array_key_exists('id', $data))
+        $fields = array_merge($meta->fieldMappings, $meta->associationMappings);
+        $reader = new AnnotationReader();
+
+        foreach ($fields as $key => $data) {
+            $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
+            if (!array_key_exists($fieldKey, $params) || array_key_exists('id', $data))
                 continue;
 
+            $reflectionProperty = new \ReflectionProperty($this->getClassName(), $key);
+            $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
             try {
-                $newValue = $this->checkRequestData($params[$data['columnName']], $data['type']);
+                $newValue = null;
+                $setMethod = 'set' . \ucfirst($key);
+                if (array_key_exists('targetEntity', $data)) {
+                    $newValue = $this->getEntityManager()->getRepository($data['targetEntity'])->find($params[$fieldKey]);
+                } else
+                    $newValue = $this->checkRequestData($params[$fieldKey], $data['type']);
                 if (is_null($newValue) && !$data['nullable'])
                     throw new BadConversionException('Param cannot be null');
 
-                $setMethod = 'set' . \ucfirst($key);
                 if (\method_exists($object, $setMethod))
                     $object->$setMethod($newValue);
             } catch (BadConversionException $e) {
-                error_log($e);
+                ExceptionUtil::logException($e, 'KRepository::save::' . $type);
+            }
+        }
+
+        if (!empty($files) && count($files) > 0) {
+            foreach ($files as $key => $file) {
+                $setter = 'set' . ucfirst($key);
+                if (\method_exists($object, $setter)) {
+                    $object->$setter($file);
+                }
+            }
+        }
+
+        if ($validator) {
+            $errors = $validator->validate($object);
+            if (count($errors) > 0) {
+                $msg = '';
+                foreach ($errors as $err) {
+                    $msg .= strtoupper($err->getPropertyPath()) . ': ' . $err->getMessage() . '; ';
+                }
+                throw new \Exception(trim($msg));
             }
         }
 
@@ -83,6 +120,11 @@ class KRepository extends EntityRepository
         }
 
         return null;
+    }
+
+    public function delete($object) {
+        $this->_em->remove($object);
+        $this->_em->flush();
     }
 
     /**

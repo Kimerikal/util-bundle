@@ -2,11 +2,13 @@
 
 namespace Kimerikal\UtilBundle\Entity;
 
-class ImgUtil {
+class ImgUtil
+{
 
     const THUMB_WIDTH = 256;
 
-    public static function store($b64Img, $path, $filename = '') {
+    public static function store($b64Img, $path, $filename = '')
+    {
         try {
             $img = \str_replace('data:image/png;base64,', '', $b64Img);
             $img = \str_replace(' ', '+', $img);
@@ -22,7 +24,8 @@ class ImgUtil {
         return false;
     }
 
-    public static function fromFileToBase64($file) {
+    public static function fromFileToBase64($file)
+    {
         $base = "";
 
         if (!empty($file) && file_exists($file)) {
@@ -34,7 +37,8 @@ class ImgUtil {
         return $base;
     }
 
-    public static function dirThumbs($pathToImages, $pathToThumbs, $thumbWidth) {
+    public static function dirThumbs($pathToImages, $pathToThumbs, $thumbWidth)
+    {
         // Abrimos el directorio
         $dir = opendir($pathToImages);
 
@@ -51,7 +55,7 @@ class ImgUtil {
 
                 // Calculamos el tamaÃ±o del thumb
                 $new_width = $thumbWidth;
-                $new_height = floor($height * ( $thumbWidth / $width ));
+                $new_height = floor($height * ($thumbWidth / $width));
 
                 // Creamos una img temporal
                 $tmp_img = imagecreatetruecolor($new_width, $new_height);
@@ -67,7 +71,8 @@ class ImgUtil {
         closedir($dir);
     }
 
-    public static function resizeFile($file, $finalWidth, $newPath = '') {
+    public static function resizeFile($file, $finalWidth, $newPath = '')
+    {
         if (empty($newPath))
             $newPath = $file;
 
@@ -80,16 +85,15 @@ class ImgUtil {
         // Cargamos la imagen y comprobamos el tamaÃƒÂ±o
         $png = false;
         $img = null;
-
         try {
-            $img = imagecreatefromjpeg($file);
-        } catch (\Exception $e) {
-            try {
-                $img = imagecreatefrompng($file);
+            if (self::isImage($file, \IMAGETYPE_JPEG)) {
+                $img = @imagecreatefromjpeg($file);
+            } else if (self::isImage($file, \IMAGETYPE_PNG)) {
+                $img = @imagecreatefrompng($file);
                 $png = true;
-            } catch (\Exception $e) {
-                return null;
             }
+        } catch (\Exception $e) {
+            ExceptionUtil::logException($e, 'ImgUtil::resizeFile');
         }
 
         if (!$img)
@@ -99,7 +103,7 @@ class ImgUtil {
         $height = imagesy($img);
 
         // Calculamos el tamaÃƒÂ±o del thumb
-        $new_height = floor($height * ( $finalWidth / $width ));
+        $new_height = floor($height * ($finalWidth / $width));
 
         // Creamos una img temporal
         $tmp_img = imagecreatetruecolor($finalWidth, $new_height);
@@ -110,7 +114,27 @@ class ImgUtil {
         return self::write($type, $tmp_img, $newPath);
     }
 
-    public static function redimensionarFromString($data) {
+    public static function isImage($path, $type = null)
+    {
+        $a = getimagesize($path);
+        $imageType = $a[2];
+
+        if (in_array($imageType, array(\IMAGETYPE_GIF, \IMAGETYPE_JPEG, \IMAGETYPE_PNG, \IMAGETYPE_BMP))) {
+            if (!empty($type)) {
+                if ($imageType == $type)
+                    return true;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function redimensionarFromString($data)
+    {
         $data = base64_decode($data);
 
         $im = imagecreatefromstring($data);
@@ -123,7 +147,8 @@ class ImgUtil {
         }
     }
 
-    public static function resize($file, $newFile, $finalWidth, $finalHeight) {
+    public static function resize($file, $newFile, $finalWidth, $finalHeight)
+    {
         $png = false;
 
         // Cargamos la imagen y comprobamos el tamaÃƒÂ±o
@@ -157,7 +182,8 @@ class ImgUtil {
      * @param type $outputFile
      * @param type $quality -- NÃºmero entre 0 (mejor compresiÃ³n) y 100 (mejor calidad).
      */
-    public static function png2jpg($originalFile, $outputFile, $quality = 90) {
+    public static function png2jpg($originalFile, $outputFile, $quality = 90)
+    {
         $image = imagecreatefrompng($originalFile);
         imagejpeg($image, $outputFile, $quality);
         imagedestroy($image);
@@ -165,7 +191,8 @@ class ImgUtil {
         return $outputFile;
     }
 
-    public static function resizeFixedSize($src_file, $dst_file, $dst_width = null, $dst_height = null) {
+    public static function resizeFixedSize($src_file, $dst_file, $dst_width = null, $dst_height = null)
+    {
 
         if (!file_exists($src_file) || !filesize($src_file))
             return false;
@@ -203,11 +230,11 @@ class ImgUtil {
             if ($width_diff > $height_diff) {
                 $next_height = $dst_height;
                 $next_width = round(($src_width * $next_height) / $src_height);
-                $dst_width = (int) $dst_width;
+                $dst_width = (int)$dst_width;
             } else {
                 $next_width = $dst_width;
                 $next_height = round($src_height * $dst_width / $src_width);
-                $dst_height = (int) $dst_height;
+                $dst_height = (int)$dst_height;
             }
         }
 
@@ -224,12 +251,13 @@ class ImgUtil {
             imagefilledrectangle($dest_image, 0, 0, $dst_width, $dst_height, $white);
         }
 
-        imagecopyresampled($dest_image, $src_image, (int) (($dst_width - $next_width) / 2), (int) (($dst_height - $next_height) / 2), 0, 0, $next_width, $next_height, $src_width, $src_height);
+        imagecopyresampled($dest_image, $src_image, (int)(($dst_width - $next_width) / 2), (int)(($dst_height - $next_height) / 2), 0, 0, $next_width, $next_height, $src_width, $src_height);
 
         return (ImgUtil::write($file_type, $dest_image, $dst_file));
     }
 
-    public static function write($type, $resource, $filename) {
+    public static function write($type, $resource, $filename)
+    {
         switch ($type) {
             case 'gif':
                 $success = imagegif($resource, $filename);
@@ -237,7 +265,7 @@ class ImgUtil {
 
             case 'png':
                 $quality = 7;
-                $success = imagepng($resource, $filename, (int) $quality);
+                $success = imagepng($resource, $filename, (int)$quality);
                 break;
 
             case 'jpg':
@@ -245,7 +273,7 @@ class ImgUtil {
             default:
                 $quality = 72;
                 imageinterlace($resource, 1);
-                $success = imagejpeg($resource, $filename, (int) $quality);
+                $success = imagejpeg($resource, $filename, (int)$quality);
                 break;
         }
         imagedestroy($resource);
@@ -253,7 +281,8 @@ class ImgUtil {
         return $success;
     }
 
-    public static function crop($src, $x, $y, $width, $height, $targ_w, $targ_h, $newPath = '') {
+    public static function crop($src, $x, $y, $width, $height, $targ_w, $targ_h, $newPath = '')
+    {
         if (empty($newPath))
             $newPath = $src;
 
@@ -265,7 +294,8 @@ class ImgUtil {
         self::write(self::imageType($src), $dst_r, $newPath);
     }
 
-    public static function imageType($src_file) {
+    public static function imageType($src_file)
+    {
         $size = getimagesize($src_file);
         if ($size['mime'] == 'image/pjpeg')
             $size['mime'] = 'image/jpeg';
@@ -273,11 +303,13 @@ class ImgUtil {
         return strtolower(substr($size['mime'], strpos($size['mime'], '/') + 1));
     }
 
-    public static function isJpeg(&$pict) {
+    public static function isJpeg(&$pict)
+    {
         return (\bin2hex($pict[0]) == 'ff' && \bin2hex($pict[1]) == 'd8');
     }
 
-    public static function isPng(&$pict) {
+    public static function isPng(&$pict)
+    {
         return (\bin2hex($pict[0]) == '89' && $pict[1] == 'P' && $pict[2] == 'N' && $pict[3] == 'G');
     }
 

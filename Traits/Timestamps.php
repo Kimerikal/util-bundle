@@ -17,7 +17,7 @@ trait Timestamps
 
 
     /**
-     * @ORM\PrePersist()
+     * @ORM\PrePersist
      */
     public function createdAt()
     {
@@ -26,7 +26,7 @@ trait Timestamps
     }
 
     /**
-     * @ORM\PreUpdate()
+     * @ORM\PreUpdate
      */
     public function updatedAt()
     {
@@ -71,5 +71,13 @@ trait Timestamps
         $this->updatedAt = $updatedAt;
 
         return $this;
+    }
+
+    public function jsonFormatCreatedAt() {
+        return $this->createdAt->format('Y-m-d H:i:s');
+    }
+
+    public function jsonFormatUpdatedAt() {
+        return $this->updatedAt->format('Y-m-d H:i:s');
     }
 }
