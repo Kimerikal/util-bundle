@@ -237,14 +237,11 @@ class SimpleForm extends AbstractType
 
                     if (isset($fd->emptyValue) && !empty($fd->emptyValue)) {
                         $bParams['empty_data'] = $fd->emptyValue;
-                        //$bParams['data'] = $fd->emptyValue;
                     }
 
                     $elements[] = ['name' => $p->name, 'type' => $fd->type, 'params' => $bParams, 'order' => $fd->order];
-                    //$builder->add($p->name, $fd->type, $bParams);
                 } else {
                     $class = $fd->className;
-                    //$builder->add($p->name, new $class(1, $this->trans));
                     $elements[] = ['name' => $p->name, 'type' => new $class(1, $this->trans), 'params' => [], 'order' => $fd->order];
                 }
             }
