@@ -103,8 +103,10 @@ class UtilController extends Controller
         $entityInfo = $this->doctrine()->getClassMetadata($classData);
         if (!empty($id))
             $object = $this->doctrineRepo($classData)->find($id);
-        else
-            $object = $entityInfo->newInstance();
+        else {
+            $objType = $entityInfo->getName();
+            $object = new $objType;
+        }
 
         $icon = '';
         $name = $plural = $entity;
