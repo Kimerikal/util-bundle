@@ -40,6 +40,9 @@ class UtilController extends Controller
         if ($page < 1)
             $page = 1;
 
+        $limit = 50;
+        $offset = $limit * ($page - 1);
+
         $breadcrumbs = array(
             array('name' => 'Lista de ' . $plural),
         );
@@ -48,7 +51,7 @@ class UtilController extends Controller
         //$this->listOptions($rowOptions, $rowData);
         //$categories = $this->doctrineRepo('EstablishmentBundle:EstablishmentCategory')->findAll();
         //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
-        $list = $this->doctrineRepo($classData)->loadAll($page);
+        $list = $this->doctrineRepo($classData)->loadAll($offset, $limit);
         //$orderHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-order.html.twig');
         //$filterHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-filters.html.twig', array('categories' => $categories));
         $orderHtml = '';
