@@ -17,27 +17,27 @@ Trait KEntityImage
 {
     /**
      * @Assert\File(maxSize="6000000")
-     * @FormData(type="file", label="Imagen", col=4, newLine=true)
+     * @FormData(type="file", label="Imagen", col=4, newLine=true, order=10)
      */
     private $file;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-x"})
+     * @FormData(type="hidden", customAttrs={"class"="crop crop-x"}, order=100)
      */
     private $xCrop;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-y"})
+     * @FormData(type="hidden", customAttrs={"class"="crop crop-y"}, order=100)
      */
     private $yCrop;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-width"})
+     * @FormData(type="hidden", customAttrs={"class"="crop crop-width"}, order=100)
      */
     private $widthCrop;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-height"})
+     * @FormData(type="hidden", customAttrs={"class"="crop crop-height"}, order=100)
      */
     private $heightCrop;
 

@@ -12,13 +12,15 @@ use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Tetranz\Select2EntityBundle\Form\Type\Select2EntityType;
 
-class SimpleForm extends AbstractType {
+class SimpleForm extends AbstractType
+{
 
     private $trans;
     private $class;
     private $group;
 
-    public function __construct($class, $trans, $group = null) {
+    public function __construct($class, $trans, $group = null)
+    {
         $this->class = $class;
         $this->trans = $trans;
         $this->group = $group;
@@ -28,7 +30,8 @@ class SimpleForm extends AbstractType {
      * @param FormBuilderInterface $builder
      * @param array $options
      */
-    public function buildForm(FormBuilderInterface $builder, array $options) {
+    public function buildForm(FormBuilderInterface $builder, array $options)
+    {
         /**
          * Event Listener
          */
@@ -98,6 +101,7 @@ class SimpleForm extends AbstractType {
         $reader = new AnnotationReader();
         $reflectionClass = new \ReflectionClass($this->class);
         $props = $reflectionClass->getProperties();
+        $elements = [];
         foreach ($props as $p) {
             $reflectionProperty = new \ReflectionProperty($this->class, $p->name);
             $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
@@ -173,7 +177,7 @@ class SimpleForm extends AbstractType {
                     } else if ($fd->type == 'ajax_select' && isset($fd->dataUrl) && isset($fd->targetObject)) {
                         $bParams['route'] = $fd->dataUrl;
                         $bParams['target_object'] = $fd->targetObject;
-                       // $bParams['class'] = $fd->targetObject;
+                        // $bParams['class'] = $fd->targetObject;
                     } else if ($fd->type == 'entity_ajax_select' && isset($fd->dataUrl) && isset($fd->targetObject)) {
                         $bParams['route'] = $fd->dataUrl;
                         $bParams['target_object'] = $fd->targetObject;
@@ -205,7 +209,7 @@ class SimpleForm extends AbstractType {
                     if ($fd->type == 'enum') {
                         $fd->type = 'choice';
                         $orm = $reader->getPropertyAnnotation($reflectionProperty, 'Doctrine\ORM\Mapping\Column');
-                        $definitions = explode(',', str_replace(' ', '', str_replace('\'', '', str_replace('\"', '',str_replace(')', '', str_ireplace('ENUM(', '', $orm->columnDefinition))))));
+                        $definitions = explode(',', str_replace(' ', '', str_replace('\'', '', str_replace('\"', '', str_replace(')', '', str_ireplace('ENUM(', '', $orm->columnDefinition))))));
                         $choices = [];
                         foreach ($definitions as $choice) {
                             $choices[$choice] = $choice;
@@ -236,11 +240,25 @@ class SimpleForm extends AbstractType {
                         //$bParams['data'] = $fd->emptyValue;
                     }
 
-                    $builder->add($p->name, $fd->type, $bParams);
+                    $elements[] = ['name' => $p->name, 'type' => $fd->type, 'params' => $bParams, 'order' => $fd->order];
+                    //$builder->add($p->name, $fd->type, $bParams);
                 } else {
                     $class = $fd->className;
-                    $builder->add($p->name, new $class(1, $this->trans));
+                    //$builder->add($p->name, new $class(1, $this->trans));
+                    $elements[] = ['name' => $p->name, 'type' => new $class(1, $this->trans), 'params' => [], 'order' => $fd->order];
                 }
+            }
+        }
+
+        if (count($elements) > 0) {
+            usort($elements, function ($a, $b) {
+                if ($a['order'] == $b['order'])
+                    return 0;
+                return ($a['order'] < $b['order']) ? -1 : 1;
+            });
+
+            foreach ($elements as $element) {
+                $builder->add($element['name'], $element['type'], $element['params']);
             }
         }
     }
@@ -248,7 +266,8 @@ class SimpleForm extends AbstractType {
     /**
      * @param OptionsResolverInterface $resolver
      */
-    public function setDefaultOptions(OptionsResolverInterface $resolver) {
+    public function setDefaultOptions(OptionsResolverInterface $resolver)
+    {
         $resolver->setDefaults(array(
             'data_class' => $this->class
         ));
@@ -257,11 +276,13 @@ class SimpleForm extends AbstractType {
     /**
      * @return string
      */
-    public function getName() {
+    public function getName()
+    {
         return 'kimerikal_utilbundle_' . mb_strtolower(str_replace('\\', '_', $this->class));
     }
 
-    private function dateToStr(\DateTime $date, $withHours = false) {
+    private function dateToStr(\DateTime $date, $withHours = false)
+    {
         if (!$date)
             return null;
 
@@ -280,11 +301,13 @@ class SimpleForm extends AbstractType {
         return $return;
     }
 
-    public function setGroup($group) {
-        $this->group =$group;
+    public function setGroup($group)
+    {
+        $this->group = $group;
     }
 
-    public function getGroup() {
+    public function getGroup()
+    {
         return $this->group;
     }
 }
