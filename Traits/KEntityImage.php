@@ -209,4 +209,76 @@ Trait KEntityImage
     {
         return $this->getWebPath();
     }
+
+    /**
+     * @return mixed
+     */
+    public function getXCrop()
+    {
+        return $this->xCrop;
+    }
+
+    /**
+     * @param mixed $xCrop
+     * @return KEntityImage
+     */
+    public function setXCrop($xCrop)
+    {
+        $this->xCrop = $xCrop;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getYCrop()
+    {
+        return $this->yCrop;
+    }
+
+    /**
+     * @param mixed $yCrop
+     * @return KEntityImage
+     */
+    public function setYCrop($yCrop)
+    {
+        $this->yCrop = $yCrop;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWidthCrop()
+    {
+        return $this->widthCrop;
+    }
+
+    /**
+     * @param mixed $widthCrop
+     * @return KEntityImage
+     */
+    public function setWidthCrop($widthCrop)
+    {
+        $this->widthCrop = $widthCrop;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHeightCrop()
+    {
+        return $this->heightCrop;
+    }
+
+    /**
+     * @param mixed $heightCrop
+     * @return KEntityImage
+     */
+    public function setHeightCrop($heightCrop)
+    {
+        $this->heightCrop = $heightCrop;
+        return $this;
+    }
 }
