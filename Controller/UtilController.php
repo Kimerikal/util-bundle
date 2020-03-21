@@ -63,7 +63,7 @@ class UtilController extends Controller
         //$js = 'bundles/kblog/js/list.js';
         $js = null;
 
-        return $this->renderSimpleList($list, '__toString', '', '', 'id', $breadcrumbs, 'Lista de ' . $plural, 'list-' . $entity, $icon, 'No se encontraron ' . $plural, 'getWebPath', $rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Nuevo ' . $name], null, $actions, $js, '', '', '', $search, $orderHtml, null);
+        return $this->renderSimpleList($list, '__toString', '', '', 'id', $breadcrumbs, 'Lista de ' . $plural, 'list-' . $entity, $icon, 'No se encontraron ' . $plural, 'getWebPath', $rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $name], null, $actions, $js, '', '', '', $search, $orderHtml, null);
     }
 
     protected function annotationListData($entityName)
@@ -129,7 +129,7 @@ class UtilController extends Controller
             ['name' => 'Editar ' . $name]
         ];
 
-        return $this->render('AdminBundle:Common:simple-form-page.html.twig', array('breadcrumbs' => $breadcrumbs, 'title' => !empty($object->getId()) ? 'Editar ' . $name . ': ' . $object->__toString() : 'Nuevo ' . $name, 'icon' => $icon, 'form' => $form->createView(), 'currentPage' => 'edit-' . $entity));
+        return $this->render('AdminBundle:Common:simple-form-page.html.twig', array('breadcrumbs' => $breadcrumbs, 'title' => !empty($object->getId()) ? 'Editar ' . $name . ': ' . $object->__toString() : 'Crear ' . $name, 'icon' => $icon, 'form' => $form->createView(), 'currentPage' => 'edit-' . $entity));
     }
 
     /**
