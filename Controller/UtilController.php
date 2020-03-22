@@ -286,14 +286,40 @@ class UtilController extends Controller
         return $return;
     }
 
-    protected function doctrine()
+    /**
+     * @return \Doctrine\Persistence\ObjectManager
+     */
+    protected function _em()
     {
         return $this->getDoctrine()->getManager();
     }
 
+    /**
+     * @param $repo - Ex: AcmeBundle:EntityAcme
+     * @return \Doctrine\Persistence\ObjectRepository
+     */
+    protected function _repo($repo)
+    {
+        return $this->_em()->getRepository($repo);
+    }
+
+    /**
+     * @return \Doctrine\Persistence\ObjectManager
+     * @deprecated - use _em()
+     */
+    protected function doctrine()
+    {
+        return $this->_em();
+    }
+
+    /**
+     * @param $repo
+     * @return \Doctrine\Persistence\ObjectRepository
+     * @deprecated - use _repo()
+     */
     protected function doctrineRepo($repo)
     {
-        return $this->getDoctrine()->getManager()->getRepository($repo);
+        return $this->_repo($repo);
     }
 
     protected function flashMsg($type, $msg)
