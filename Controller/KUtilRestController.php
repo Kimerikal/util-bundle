@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
-class UtilFosRestController extends UtilController
+class KUtilRestController extends UtilController
 {
     const ERROR_DEFAULT_MSG = 'Ocurrió un error inesperado. Comprueba tu conexión a internet y vuelve a intentarlo más tarde.';
     const DEFAULT_MAIL = 'mailer_user';
