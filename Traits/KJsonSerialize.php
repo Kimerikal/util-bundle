@@ -3,14 +3,16 @@
 namespace Kimerikal\UtilBundle\Traits;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Symfony\Component\Security\Acl\Util\ClassUtils;
 
 Trait KJsonSerialize
 {
     public function jsonSerialize()
     {
+        $realClass = ClassUtils::getRealClass($this);
         $data = [];
         $reader = new AnnotationReader();
-        $reflect = new \ReflectionClass($this);
+        $reflect = new \ReflectionClass($realClass);
         $props = $reflect->getProperties(\ReflectionProperty::IS_STATIC | \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
         foreach ($props as $prop) {
             $hide = $reader->getPropertyAnnotation($prop, 'Kimerikal\\UtilBundle\\Annotations\\KJsonHide');
