@@ -9,14 +9,13 @@ Trait KJsonSerialize
 {
     public function jsonSerialize()
     {
-        $realClass = ClassUtils::getRealClass($this);
         $data = [];
+        $realClass = ClassUtils::getRealClass($this);
         $reader = new AnnotationReader();
         $reflect = new \ReflectionClass($realClass);
         $props = $reflect->getProperties(\ReflectionProperty::IS_STATIC | \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
         foreach ($props as $prop) {
-            $hide = $reader->getPropertyAnnotation($prop, 'Kimerikal\\UtilBundle\\Annotations\\KJsonHide');
-            if ($hide)
+            if ($reader->getPropertyAnnotation($prop, 'Kimerikal\\UtilBundle\\Annotations\\KJsonHide'))
                 continue;
 
             $formatMethod = 'jsonFormat' . ucfirst($prop->getName());
