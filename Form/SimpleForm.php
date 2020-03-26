@@ -45,9 +45,6 @@ class SimpleForm extends AbstractType
                 if ($fd) {
                     if ($fd->type == 'entity') {
                         $obj = $event->getData();
-                        if ($obj) {
-
-                        }
                     }
                     if (!empty($fd->customAttrs)) {
                         $obj = $event->getData();

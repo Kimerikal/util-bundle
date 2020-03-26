@@ -60,21 +60,6 @@ class KUtilRestController extends UtilController
         return new JsonResponse($params, $status);
     }
 
-    protected function baseUrl()
-    {
-        return $this->getParameter('base_url');
-    }
-
-    protected function em()
-    {
-        return $this->getDoctrine()->getManager();
-    }
-
-    protected function emRepo($repo)
-    {
-        return $this->em()->getRepository($repo);
-    }
-
     protected function getDefaultResponse()
     {
         return ['done' => false, 'msg' => self::ERROR_DEFAULT_MSG];
@@ -155,27 +140,5 @@ class KUtilRestController extends UtilController
         }
 
         return new JsonResponse($params, $status);
-    }
-
-    protected function mailTemplateSend($title, $content, $to, $subTitle = null)
-    {
-        $view = $this->renderView('AdminBundle:Mail:info-email.html.twig', array('title' => $title, 'subTitle' => $subTitle, 'content' => $content));
-        return $this->mailing($title, array($this->parameter(self::DEFAULT_MAIL) => 'Asociación Celiaca Aragonesa'), $to, $view);
-    }
-
-    protected function mailing($subject, $from, $to, $view)
-    {
-        $message = \Swift_Message::newInstance();
-        $message->setSubject($subject)
-            ->setFrom($from)
-            ->setTo($to)
-            ->setBody($view, 'text/html');
-
-        return $this->get('mailer')->send($message);
-    }
-
-    protected function parameter($name)
-    {
-        return $this->container->getParameter($name);
     }
 }

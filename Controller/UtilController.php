@@ -28,11 +28,8 @@ class UtilController extends Controller
     public function listAuto(Request $r, $entity, $page = 1)
     {
         $classData = $this->getEntityUrlMap($entity);
-        $entityInfo = $this->doctrine()->getClassMetadata($classData);
-        $icon = '';
-        $name = $plural = $entity;
-        $rowOptions = $this->getGenericAnnotations($entityInfo->getName(), $name, $plural, $icon, true);
-
+        $entityInfo = $this->_em()->getClassMetadata($classData);
+        $options = $this->getGenericAnnotations($entityInfo->getName());
         if (is_string($page) && $page != "1") {
             $page = intval(str_replace('pagina-', '', $page));
         }
@@ -44,14 +41,13 @@ class UtilController extends Controller
         $offset = $limit * ($page - 1);
 
         $breadcrumbs = array(
-            array('name' => 'Lista de ' . $plural),
+            array('name' => 'Lista de ' . $options->plural),
         );
 
         $rowData = $this->annotationListData($entityInfo->getName());
-        //$this->listOptions($rowOptions, $rowData);
         //$categories = $this->doctrineRepo('EstablishmentBundle:EstablishmentCategory')->findAll();
         //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
-        $list = $this->doctrineRepo($classData)->loadAll($offset, $limit);
+        $list = $this->_repo($classData)->loadAll($offset, $limit);
         //$orderHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-order.html.twig');
         //$filterHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-filters.html.twig', array('categories' => $categories));
         $orderHtml = '';
@@ -63,7 +59,78 @@ class UtilController extends Controller
         //$js = 'bundles/kblog/js/list.js';
         $js = null;
 
-        return $this->renderSimpleList($list, '__toString', '', '', 'id', $breadcrumbs, 'Lista de ' . $plural, 'list-' . $entity, $icon, 'No se encontraron ' . $plural, 'getWebPath', $rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $name], null, $actions, $js, '', '', '', $search, $orderHtml, null);
+        return $this->renderSimpleList($list, '__toString', '', '', '', $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name], null, $actions, $js, '', '', '', $search, $orderHtml, null);
+    }
+
+    /**
+     * @Route("/kadmin/autogen/edit/{entity}/{id}", name="k_util_kadmin_autogen_edit", methods={"POST","GET"}, defaults={"id": 0})
+     * @return Response
+     */
+    public function editAuto(Request $r, $entity, $id = 0)
+    {
+        $object = null;
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->doctrine()->getClassMetadata($classData);
+        if (!empty($id))
+            $object = $this->doctrineRepo($classData)->find($id);
+        else {
+            $objType = $entityInfo->getName();
+            $object = new $objType;
+        }
+
+        $options = $this->getGenericAnnotations($entityInfo->getName());
+
+        $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
+        $save = $this->checkSaveForm($r, $form);
+        if ($save) {
+            $this->addFlash('done', $options['name'] . ' guardado con éxito.');
+            return $this->redirect($r->headers->get('referer'));
+        } else if ($save === false) {
+            $this->addFlash('error', 'Ocurrió un error inesperado.');
+        }
+
+        $breadcrumbs = [
+            ['name' => 'Lista de ' . $options->plural, 'url' => $this->generateUrl('k_util_kadmin_autogen_list', ['entity' => $entity])],
+            ['name' => 'Editar ' . $options->name]
+        ];
+
+        return $this->render('AdminBundle:Common:simple-form-page.html.twig', array('breadcrumbs' => $breadcrumbs, 'title' => !empty($object->getId()) ? 'Editar ' . $options->name . ': ' . $object->__toString() : 'Crear ' . $options->name, 'icon' => $options->icon, 'form' => $form->createView(), 'currentPage' => 'edit-' . $entity));
+    }
+
+    /**
+     * @Route("/kadmin/autogen/remove/{entity}/{id}", name="k_util_kadmin_autogen_remove", methods={"POST","GET"})
+     * @return Response
+     */
+    public function delete($entity, $id)
+    {
+        $resp = array('done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.');
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->doctrine()->getClassMetadata($classData);
+        $options = $this->getGenericAnnotations($entityInfo->getName());
+        $repo = $this->doctrineRepo($classData);
+        $object = $repo->find($id);
+        if ($object) {
+            try {
+                $repo->delete($object);
+                $resp['done'] = true;
+                $resp['msg'] = $options->name . ' eliminado con éxito';
+            } catch (\Exception $ex) {
+                ExceptionUtil::logException($ex, 'UtilController::delete');
+            }
+        }
+
+        return new JsonResponse($resp);
+    }
+
+    public function getGenericAnnotations($entityName)
+    {
+        $reader = new AnnotationReader();
+        $reflClass = new \ReflectionClass($entityName);
+        $options = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
+        if (isset($options->rowOptions) && !empty($options->rowOptions))
+            $options->rowOptions = $this->formatRowOptions($options->rowOptions);
+
+        return $options;
     }
 
     protected function annotationListData($entityName)
@@ -93,86 +160,6 @@ class UtilController extends Controller
                 return 0;
             return ($a['order'] < $b['order']) ? -1 : 1;
         });
-    }
-
-    /**
-     * @Route("/kadmin/autogen/edit/{entity}/{id}", name="k_util_kadmin_autogen_edit", methods={"POST","GET"}, defaults={"id": 0})
-     * @return Response
-     */
-    public function editAuto(Request $r, $entity, $id = 0)
-    {
-        $object = null;
-        $classData = $this->getEntityUrlMap($entity);
-        $entityInfo = $this->doctrine()->getClassMetadata($classData);
-        if (!empty($id))
-            $object = $this->doctrineRepo($classData)->find($id);
-        else {
-            $objType = $entityInfo->getName();
-            $object = new $objType;
-        }
-
-        $icon = '';
-        $name = $plural = $entity;
-        $this->getGenericAnnotations($entityInfo->getName(), $name, $plural, $icon);
-
-        $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
-        $save = $this->checkSaveForm($r, $form);
-        if ($save) {
-            $this->addFlash('done', $name . ' guardado con éxito.');
-            return $this->redirect($r->headers->get('referer'));
-        } else if ($save === false) {
-            $this->addFlash('error', 'Ocurrió un error inesperado.');
-        }
-
-        $breadcrumbs = [
-            ['name' => 'Lista de ' . $plural, 'url' => $this->generateUrl('k_util_kadmin_autogen_list', ['entity' => $entity])],
-            ['name' => 'Editar ' . $name]
-        ];
-
-        return $this->render('AdminBundle:Common:simple-form-page.html.twig', array('breadcrumbs' => $breadcrumbs, 'title' => !empty($object->getId()) ? 'Editar ' . $name . ': ' . $object->__toString() : 'Crear ' . $name, 'icon' => $icon, 'form' => $form->createView(), 'currentPage' => 'edit-' . $entity));
-    }
-
-    /**
-     * @Route("/kadmin/autogen/remove/{entity}/{id}", name="k_util_kadmin_autogen_remove", methods={"POST","GET"})
-     * @return Response
-     */
-    public function delete($entity, $id)
-    {
-        $resp = array('done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.');
-        $classData = $this->getEntityUrlMap($entity);
-        $entityInfo = $this->doctrine()->getClassMetadata($classData);
-        $icon = '';
-        $name = $plural = $entity;
-        $this->getGenericAnnotations($entityInfo->getName(), $name, $plural, $icon);
-        $repo = $this->doctrineRepo($classData);
-        $object = $repo->find($id);
-        if ($object) {
-            try {
-                $repo->delete($object);
-                $resp['done'] = true;
-                $resp['msg'] = $name . ' eliminado con éxito';
-            } catch (\Exception $ex) {
-                ExceptionUtil::logException($ex, 'UtilController::delete');
-            }
-        }
-
-        return new JsonResponse($resp);
-    }
-
-    public function getGenericAnnotations($entityName, &$name, &$plural, &$icon, $returnRowOptions = false)
-    {
-        $reader = new AnnotationReader();
-        $reflClass = new \ReflectionClass($entityName);
-        $generic = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
-
-        if (isset($generic->name) && !empty($generic->name))
-            $name = $plural = $generic->name;
-        if (isset($generic->plural) && !empty($generic->plural))
-            $plural = $generic->plural;
-        if (isset($generic->icon) && !empty($generic->icon))
-            $icon = $generic->icon;
-        if ($returnRowOptions && isset($generic->rowOptions) && !empty($generic->rowOptions))
-            return $this->formatRowOptions($generic->rowOptions);
     }
 
     private function formatRowOptions($options)
@@ -315,7 +302,7 @@ class UtilController extends Controller
     /**
      * @param $repo
      * @return \Doctrine\Persistence\ObjectRepository
-     * @deprecated - use _repo()
+     * @deprecated
      */
     protected function doctrineRepo($repo)
     {
@@ -496,6 +483,10 @@ class UtilController extends Controller
         }
     }
 
+    protected function baseUrl()
+    {
+        return $this->getParameter('base_url');
+    }
 
     /**
      * Method to launch a background process. All code below this call

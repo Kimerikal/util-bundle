@@ -17,4 +17,8 @@ final class KTPLGeneric implements Annotation
     public $listJS = '';
     public $formJS = '';
     public $rowOptions = [];
+    public $imageMethod = '';
+    public $rowMainRouteName = 'k_util_kadmin_autogen_edit';
+    public $rowMainRouteKey = 'id';
+    public $rowMainRouteMehod = 'id';
 }
