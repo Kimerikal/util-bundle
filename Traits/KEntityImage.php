@@ -12,32 +12,38 @@ use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Kimerikal\UtilBundle\Annotations\KJsonHide;
 
 Trait KEntityImage
 {
     /**
      * @Assert\File(maxSize="6000000")
      * @FormData(type="file", label="Imagen", col=4, newLine=true, order=10)
+     * @KJsonHide()
      */
     private $file;
 
     /**
      * @FormData(type="hidden", customAttrs={"class"="crop crop-x"}, order=100)
+     * @KJsonHide()
      */
     private $xCrop;
 
     /**
      * @FormData(type="hidden", customAttrs={"class"="crop crop-y"}, order=100)
+     * @KJsonHide()
      */
     private $yCrop;
 
     /**
      * @FormData(type="hidden", customAttrs={"class"="crop crop-width"}, order=100)
+     * @KJsonHide()
      */
     private $widthCrop;
 
     /**
      * @FormData(type="hidden", customAttrs={"class"="crop crop-height"}, order=100)
+     * @KJsonHide()
      */
     private $heightCrop;
 

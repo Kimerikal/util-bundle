@@ -97,11 +97,11 @@ class SimpleForm extends AbstractType
 
         $reader = new AnnotationReader();
         $reflectionClass = new \ReflectionClass($this->class);
-        $props = $reflectionClass->getProperties();
+        $props = $reflectionClass->getProperties(\ReflectionProperty::IS_STATIC | \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
         $elements = [];
         foreach ($props as $p) {
-            $reflectionProperty = new \ReflectionProperty($this->class, $p->name);
-            $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
+            //$reflectionProperty = new \ReflectionProperty($this->class, $p->name);
+            $fd = $reader->getPropertyAnnotation($p, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
             if ($fd) {
                 if (!empty($this->group) && isset($fd->groups) && count($fd->groups) > 0 && !in_array($this->group, $fd->groups) && !array_key_exists($this->group, $fd->groups))
                     continue;

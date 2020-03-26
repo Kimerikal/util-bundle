@@ -1,28 +1,32 @@
 <?php
 
-
 namespace Kimerikal\UtilBundle\Traits;
+
+use Doctrine\Common\Annotations\AnnotationReader;
 
 Trait KJsonSerialize
 {
     public function jsonSerialize()
     {
+        $data = [];
+        $reader = new AnnotationReader();
         $reflect = new \ReflectionClass($this);
         $props = $reflect->getProperties(\ReflectionProperty::IS_STATIC | \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
-        $propsIterator = function () use ($props) {
-            foreach ($props as $prop) {
-                // TODO get annotations to check if it must not be shown
-                $formatMethod = 'jsonFormat' . ucfirst($prop->getName());
-                $val = $this->{$prop->getName()};
-                if (\method_exists($this, $formatMethod))
-                    $val = $this->$formatMethod();
-                else if (is_object($val) && $val instanceof \JsonSerializable)
-                    $val = $this->{$prop->getName()}->jsonSerialize();
+        foreach ($props as $prop) {
+            $hide = $reader->getPropertyAnnotation($prop, 'Kimerikal\\UtilBundle\\Annotations\\KJsonHide');
+            if ($hide)
+                continue;
 
-                yield $prop->getName() => $val;
-            }
-        };
+            $formatMethod = 'jsonFormat' . ucfirst($prop->getName());
+            $val = $this->{$prop->getName()};
+            if (\method_exists($this, $formatMethod))
+                $val = $this->$formatMethod();
+            else if (is_object($val) && $val instanceof \JsonSerializable)
+                $val = $this->{$prop->getName()}->jsonSerialize();
 
-        return iterator_to_array($propsIterator());
+            $data[$prop->getName()] = $val;
+        }
+
+        return $data;
     }
 }

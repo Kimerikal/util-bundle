@@ -134,7 +134,9 @@ class KUtilRestController extends UtilController
             }
 
             $this->responseOkDetail($params, $status);
-            $params['data'] = $object instanceof \JsonSerializable ? $object->jsonSerialize($this->baseUrl()) : $object;
+            //$params['data'] = $object instanceof \JsonSerializable ? $object->jsonSerialize($this->baseUrl()) : $object;
+            //$params['data'] = $object instanceof \JsonSerializable ? $object->jsonSerialize() : $object;
+            $params['data'] = $object;
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);
         }
