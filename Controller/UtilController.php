@@ -13,6 +13,7 @@ use Symfony\Component\Form\Form;
 use Kimerikal\UtilBundle\Entity\StrUtil;
 use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\Validator\Constraints\Date;
 
 class UtilController extends Controller
 {
@@ -83,7 +84,7 @@ class UtilController extends Controller
         $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
         $save = $this->checkSaveForm($r, $form);
         if ($save) {
-            $this->addFlash('done', $options['name'] . ' guardado con éxito.');
+            $this->addFlash('done', $options->name . ' guardado con éxito.');
             return $this->redirect($r->headers->get('referer'));
         } else if ($save === false) {
             $this->addFlash('error', 'Ocurrió un error inesperado.');
@@ -452,6 +453,10 @@ class UtilController extends Controller
         $form->handleRequest($r);
         if ($save && $form->isSubmitted() && $form->isValid()) {
             $obj = $form->getData();
+
+            if (\method_exists($obj, 'setUpdatedAt')) {
+                $obj->setUpdatedAt(new \DateTime());
+            }
 
             $this->callBackExec($form, $callbackBefore);
             $this->persist($obj);
