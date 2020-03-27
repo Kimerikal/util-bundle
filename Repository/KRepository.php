@@ -3,7 +3,9 @@
 namespace Kimerikal\UtilBundle\Repository;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Inflector\Inflector;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use http\Exception\BadConversionException;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
@@ -49,7 +51,18 @@ class KRepository extends EntityRepository
                 $newValue = null;
                 $setMethod = 'set' . \ucfirst($key);
                 if (array_key_exists('targetEntity', $data)) {
-                    $newValue = $this->getEntityManager()->getRepository($data['targetEntity'])->find($params[$fieldKey]);
+                    if (($data['type'] == (ClassMetadataInfo::MANY_TO_MANY || ClassMetadataInfo::TO_MANY))
+                        && is_array($params[$fieldKey])) {
+                        $setMethod = 'add' . Inflector::singularize(\ucfirst($key));
+                        if (\method_exists($object, $setMethod)) {
+                            foreach ($params[$fieldKey] as $obj) {
+                                $bdObj = $this->getEntityManager()->getRepository($data['targetEntity'])->find($obj);
+                                $object->$setMethod($bdObj);
+                            }
+                            continue;
+                        }
+                    } else
+                        $newValue = $this->getEntityManager()->getRepository($data['targetEntity'])->find($params[$fieldKey]);
                 } else
                     $newValue = $this->checkRequestData($params[$fieldKey], $data['type']);
                 if (is_null($newValue) && !$data['nullable'])
@@ -99,30 +112,35 @@ class KRepository extends EntityRepository
     {
         $q = $this->createQueryBuilder('c')
             ->select('c')
-            ->addOrderBy('c.createdAt', 'DESC')
             ->setMaxResults($limit)
             ->setFirstResult($offset);
 
-        if ($category > 0) {
+        if (\property_exists($this->getClassName(), 'updatedAt'))
+            $q->addOrderBy('c.updatedAt', 'DESC');
+        else
+            $q->addOrderBy('c.id', 'DESC');
+
+        if ($category > 0 && \property_exists($this->getClassName(), 'category')) {
             $q->andWhere('c.category = :category')
                 ->setParameter('category', $category);
         }
 
-        if ($onlyActive) {
+        if ($onlyActive && \property_exists($this->getClassName(), 'enabled')) {
             $q->andWhere('c.enabled = :enabled')
                 ->setParameter('enabled', true);
         }
 
         try {
-            return new Paginator($q);
+            return new Paginator($q->getQuery());
         } catch (\Exception $ex) {
-            error_log($ex->getMessage());
+            ExceptionUtil::logException($ex, 'KRepository::loadAll');
         }
 
         return null;
     }
 
-    public function delete($object) {
+    public function delete($object)
+    {
         $this->_em->remove($object);
         $this->_em->flush();
     }

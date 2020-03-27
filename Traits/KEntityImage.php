@@ -12,38 +12,38 @@ use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Validator\Constraints as Assert;
-use Kimerikal\UtilBundle\Annotations\KJsonHide;
+use Kimerikal\UtilBundle\Annotations as KMK;
 
 Trait KEntityImage
 {
     /**
      * @Assert\File(maxSize="6000000")
-     * @FormData(type="file", label="Imagen", col=4, newLine=true, order=10)
-     * @KJsonHide()
+     * @KMK\FormData(type="file", label="Imagen", col=4, newLine=true, order=10)
+     * @KMK\KJsonHide()
      */
     private $file;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-x"}, order=100)
-     * @KJsonHide()
+     * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-x"}, order=100)
+     * @KMK\KJsonHide()
      */
     private $xCrop;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-y"}, order=100)
-     * @KJsonHide()
+     * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-y"}, order=100)
+     * @KMK\KJsonHide()
      */
     private $yCrop;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-width"}, order=100)
-     * @KJsonHide()
+     * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-width"}, order=100)
+     * @KMK\KJsonHide()
      */
     private $widthCrop;
 
     /**
-     * @FormData(type="hidden", customAttrs={"class"="crop crop-height"}, order=100)
-     * @KJsonHide()
+     * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-height"}, order=100)
+     * @KMK\KJsonHide()
      */
     private $heightCrop;
 

@@ -2,6 +2,7 @@
 
 namespace Kimerikal\UtilBundle\Controller;
 
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -52,7 +53,7 @@ class KUtilRestController extends UtilController
         try {
             $entity = $this->getDoctrine()->getManager()->getRepository($this->getEntityUrlMap($entityClass))->save($r->request->all(), $r->files->all(), $this->get('validator'));
             $this->responseOkDetail($params, $status);
-            $params['data'] = $entity instanceof \JsonSerializable ? $entity->jsonSerialize() : $entity;
+            $params['data'] = $entity;
         } catch (\Exception $e) {
             return $this->returnResponseException($e, $params, $status);
         }
@@ -65,10 +66,18 @@ class KUtilRestController extends UtilController
         return ['done' => false, 'msg' => self::ERROR_DEFAULT_MSG];
     }
 
-    protected function responseOkList(&$params, &$status, $total, $limit, $offset)
+    protected function responseOkList(&$params, &$status, $total, $limit, $offset, $list = [])
     {
+        if ($list instanceof Paginator) {
+            $tmp = [];
+            foreach ($list as $l) {
+                $tmp[] = $l;
+            }
+            $list = $tmp;
+            unset($tmp);
+        }
         $params['done'] = true;
-        $params['data'] = ['list' => [], 'meta' => ['total' => (int)$total, 'limit' => (int)$limit, 'offset' => (int)$offset]];
+        $params['data'] = ['list' => $list, 'meta' => ['total' => (int)$total, 'limit' => (int)$limit, 'offset' => (int)$offset]];
         $params['msg'] = 'Ok';
         $status = Response::HTTP_OK;
     }
@@ -90,7 +99,8 @@ class KUtilRestController extends UtilController
             $status = $e->getCode();
     }
 
-    protected function filterExceptionMessage($msg) {
+    protected function filterExceptionMessage($msg)
+    {
         if (stripos($msg, 'SQLSTATE[23000]:')) {
             $tmp = explode('SQLSTATE[23000]:', $msg);
             return trim($tmp[1]);
@@ -110,11 +120,8 @@ class KUtilRestController extends UtilController
         $status = Response::HTTP_INTERNAL_SERVER_ERROR;
         $params = $this->getDefaultResponse();
         try {
-            $list = $this->doctrineRepo($className)->loadAll(null, $limit, $category, true, $offset);
-            $this->responseOkList($params, $status, $list->count(), $limit, $offset);
-            foreach ($list as $entity) {
-                $params['data']['list'][] = $entity->jsonSerialize($this->baseUrl());
-            }
+            $list = $this->_repo($className)->loadAll($offset, $limit, $category, true, $offset);
+            $this->responseOkList($params, $status, $list->count(), $limit, $offset, $list);
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);
         }
