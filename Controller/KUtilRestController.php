@@ -51,8 +51,7 @@ class KUtilRestController extends UtilController
 
         try {
             $entity = $this->getDoctrine()->getManager()->getRepository($this->getEntityUrlMap($entityClass))->save($r->request->all(), $r->files->all(), $this->get('validator'));
-            $this->responseOkDetail($params, $status);
-            $params['data'] = $entity instanceof \JsonSerializable ? $entity->jsonSerialize() : $entity;
+            return $this->mDetail($entity);
         } catch (\Exception $e) {
             return $this->returnResponseException($e, $params, $status);
         }
@@ -134,8 +133,6 @@ class KUtilRestController extends UtilController
             }
 
             $this->responseOkDetail($params, $status);
-            //$params['data'] = $object instanceof \JsonSerializable ? $object->jsonSerialize($this->baseUrl()) : $object;
-            //$params['data'] = $object instanceof \JsonSerializable ? $object->jsonSerialize() : $object;
             $params['data'] = $object;
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);
