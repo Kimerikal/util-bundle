@@ -3,6 +3,7 @@
 namespace Kimerikal\UtilBundle\Traits;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\ORM\PersistentCollection;
 use Symfony\Component\Security\Acl\Util\ClassUtils;
 
 Trait KJsonSerialize
@@ -22,6 +23,8 @@ Trait KJsonSerialize
             $val = $this->{$prop->getName()};
             if (\method_exists($this, $formatMethod))
                 $val = $this->$formatMethod();
+            elseif ($val instanceof PersistentCollection)
+                $val = $val->toArray();
 
             $data[$prop->getName()] = $val;
         }
