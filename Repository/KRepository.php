@@ -4,12 +4,15 @@ namespace Kimerikal\UtilBundle\Repository;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Inflector\Inflector;
+use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use http\Exception\BadConversionException;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 use Kimerikal\UtilBundle\Entity\StrUtil;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -35,11 +38,9 @@ class KRepository extends EntityRepository
         if (!$object)
             $object = new $type;
 
-        // TODO support data types: file, array, json_array, entity, entity array
-        $meta = $this->getClassMetadata();
-        $fields = array_merge($meta->fieldMappings, $meta->associationMappings);
+        // TODO support data types: array, json_array
+        $fields = $this->getClassMetaFields();
         $reader = new AnnotationReader();
-
         foreach ($fields as $key => $data) {
             $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
             if (!array_key_exists($fieldKey, $params) || array_key_exists('id', $data))
@@ -51,7 +52,7 @@ class KRepository extends EntityRepository
                 $newValue = null;
                 $setMethod = 'set' . \ucfirst($key);
                 if (array_key_exists('targetEntity', $data)) {
-                    if (($data['type'] == (ClassMetadataInfo::MANY_TO_MANY || ClassMetadataInfo::TO_MANY))
+                    if ((($data['type'] == ClassMetadataInfo::MANY_TO_MANY || $data['type'] == ClassMetadataInfo::TO_MANY))
                         && is_array($params[$fieldKey])) {
                         $setMethod = 'add' . Inflector::singularize(\ucfirst($key));
                         if (\method_exists($object, $setMethod)) {
@@ -108,27 +109,27 @@ class KRepository extends EntityRepository
      * @param bool $onlyActive
      * @return Paginator|null
      */
-    public function loadAll($offset = 0, $limit = 50, $category = 0, $onlyActive = false)
+    public function loadAll($offset = 0, $limit = 50, $onlyActive = false)
     {
-        $q = $this->createQueryBuilder('c')
-            ->select('c')
+        $q = $this->createQueryBuilder('a')
+            ->select('a')
             ->setMaxResults($limit)
             ->setFirstResult($offset);
 
-        if (\property_exists($this->getClassName(), 'updatedAt'))
-            $q->addOrderBy('c.updatedAt', 'DESC');
-        else
-            $q->addOrderBy('c.id', 'DESC');
-
-        if ($category > 0 && \property_exists($this->getClassName(), 'category')) {
-            $q->andWhere('c.category = :category')
-                ->setParameter('category', $category);
-        }
-
-        if ($onlyActive && \property_exists($this->getClassName(), 'enabled')) {
-            $q->andWhere('c.enabled = :enabled')
+        $this->addJoins($q);
+        if ($onlyActive && \property_exists($this->getClassName(), $this->enabledField())) {
+            $q->andWhere('a.' . $this->enabledField() . ' = :enabled')
                 ->setParameter('enabled', true);
         }
+
+        if (!empty($this->loadAllOrderBy())) {
+            foreach ($this->loadAllOrderBy() as $key => $val) {
+                $q->addOrderBy('a.' . $key, $val);
+            }
+        }
+
+        $this->filterQuery($q);
+        $this->filter_load_all_query($q, $offset, $limit);
 
         try {
             return new Paginator($q->getQuery());
@@ -333,5 +334,93 @@ class KRepository extends EntityRepository
     protected function validateDate($date)
     {
         return preg_match("/^\d\d\d\d-(0?[1-9]|1[0-2])-(0?[1-9]|[12][0-9]|3[01])$/", $date) === 1;
+    }
+
+    /**
+     * Override to change param enabled or to leave it empty.
+     */
+    protected function enabledField()
+    {
+        return 'enabled';
+    }
+
+    /**
+     * Override to change default order
+     */
+    protected function loadAllOrderBy()
+    {
+        return ['id' => 'DESC'];
+    }
+
+    protected function filter_load_all_query(QueryBuilder &$q, $offset, $limit)
+    {
+    }
+
+    protected function addJoins(QueryBuilder &$q)
+    {
+    }
+
+    private function filterQuery(QueryBuilder &$q)
+    {
+        if (!empty($_GET) && count($_GET) > 0) {
+            $fields = $this->getClassMetaFields();
+            $count = 1;
+            $joins = [];
+            foreach ($_GET as $getKey => $param) {
+                foreach ($fields as $key => $data) {
+                    $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
+                    if (stripos($getKey, $fieldKey) !== 0)
+                        continue;
+
+                    $prefix = 'a.';
+                    $field = $data['fieldName'];
+                    $tmp = explode('__', $getKey);
+                    if (strpos($tmp[0], ':') !== false) {
+                        $joinTmp = explode(':', $tmp[0]);
+                        if (!array_key_exists($joinTmp[0], $joins)) {
+                            $joins[$joinTmp[0]] = 'a' . $count . '.';
+                            $q->innerJoin('a.' . $joinTmp[0], 'a' . $count);
+                        }
+
+                        $prefix = $joins[$joinTmp[0]];
+                        $field = $joinTmp[1];
+                    }
+
+                    if (count($tmp) === 1) {
+                        $q->andWhere($prefix . $field . '= :param_' . $count)
+                            ->setParameter('param_' . $count, $param);
+                    } else if (count($tmp) === 2) {
+                        $operation = $this->queryActionDictionary($tmp[1]);
+                        if ($operation === 'NOT IN' || $operation === 'IN') {
+                            $q->andWhere($prefix . $field . ' ' . $operation . ' (:param_' . $count . ')');
+                            if (is_array($param))
+                                $q->setParameter('param_' . $count, $param, Connection::PARAM_STR_ARRAY);
+                            else
+                                $q->setParameter('param_' . $count, $param);
+                        } else {
+                            $q->andWhere($prefix . $field . ' ' . $operation . ' :param_' . $count)
+                                ->setParameter('param_' . $count, $param);
+                        }
+                    }
+
+                    $count++;
+                }
+            }
+        }
+    }
+
+    private function queryActionDictionary($sign)
+    {
+        $dictionary = ['gt' => '>', 'gte' => '>=', 'lt' => '<', 'lte' => '<=', 'in' => 'IN', 'notin' => 'NOT IN'];
+        if (array_key_exists($sign, $dictionary))
+            return $dictionary[$sign];
+
+        return '=';
+    }
+
+    protected function getClassMetaFields()
+    {
+        $meta = $this->getClassMetadata();
+        return array_merge($meta->fieldMappings, $meta->associationMappings);
     }
 }

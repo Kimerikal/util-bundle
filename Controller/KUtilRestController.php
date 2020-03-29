@@ -14,12 +14,12 @@ class KUtilRestController extends UtilController
     const DEFAULT_MAIL = 'mailer_user';
 
     /**
-     * @Route("/api/autogen/list/{entityClass}/{limit}/{offset}/{category}", name="k_util_api_autogen_list", methods={"GET"}, defaults={"category": 0})
+     * @Route("/api/autogen/list/{entityClass}/{limit}/{offset}", name="k_util_api_autogen_list", methods={"GET"})
      * @return Response
      */
-    public function list(Request $r, $entityClass, $limit, $offset, $category = 0)
+    public function list(Request $r, $entityClass, $limit, $offset)
     {
-        return $this->mList($this->getEntityUrlMap($entityClass), $limit, $offset, $category);
+        return $this->mList($this->getEntityUrlMap($entityClass), $limit, $offset);
     }
 
     /**
@@ -77,7 +77,7 @@ class KUtilRestController extends UtilController
             unset($tmp);
         }
         $params['done'] = true;
-        $params['data'] = ['list' => $list, 'meta' => ['total' => (int)$total, 'limit' => (int)$limit, 'offset' => (int)$offset]];
+        $params['data'] = ['list' => $list, 'meta' => ['total' => (int)$total, 'limit' => (int)$limit, 'offset' => (int)$offset, 'remaining' => max(0, ($total - $offset - $limit))]];
         $params['msg'] = 'Ok';
         $status = Response::HTTP_OK;
     }
@@ -115,12 +115,12 @@ class KUtilRestController extends UtilController
         return new JsonResponse($params, $status);
     }
 
-    protected function mList($className, $limit = 50, $offset = 0, $category = null)
+    protected function mList($className, $limit = 50, $offset = 0)
     {
         $status = Response::HTTP_INTERNAL_SERVER_ERROR;
         $params = $this->getDefaultResponse();
         try {
-            $list = $this->_repo($className)->loadAll($offset, $limit, $category, true, $offset);
+            $list = $this->_repo($className)->loadAll($offset, $limit, true);
             $this->responseOkList($params, $status, $list->count(), $limit, $offset, $list);
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);
@@ -141,8 +141,6 @@ class KUtilRestController extends UtilController
             }
 
             $this->responseOkDetail($params, $status);
-            //$params['data'] = $object instanceof \JsonSerializable ? $object->jsonSerialize($this->baseUrl()) : $object;
-            //$params['data'] = $object instanceof \JsonSerializable ? $object->jsonSerialize() : $object;
             $params['data'] = $object;
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);

@@ -22,8 +22,6 @@ Trait KJsonSerialize
             $val = $this->{$prop->getName()};
             if (\method_exists($this, $formatMethod))
                 $val = $this->$formatMethod();
-            else if (is_object($val) && $val instanceof \JsonSerializable)
-                $val = $this->{$prop->getName()}->jsonSerialize();
 
             $data[$prop->getName()] = $val;
         }
