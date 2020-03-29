@@ -67,11 +67,11 @@ class KRepository extends EntityRepository
                 } else
                     $newValue = $this->checkRequestData($params[$fieldKey], $data['type']);
                 if (is_null($newValue) && !$data['nullable'])
-                    throw new BadConversionException('Param cannot be null');
+                    throw new \RuntimeException('Param cannot be null');
 
                 if (\method_exists($object, $setMethod))
                     $object->$setMethod($newValue);
-            } catch (BadConversionException $e) {
+            } catch (\RuntimeException $e) {
                 ExceptionUtil::logException($e, 'KRepository::save::' . $type);
             }
         }
@@ -283,12 +283,12 @@ class KRepository extends EntityRepository
                     return false;
 
                 if (!is_bool($data))
-                    throw new BadConversionException('Bad data type.');
+                    throw new \RuntimeException('Bad data type.');
 
                 return $data;
             case "decimal":
                 if (!$this->validateFloat($data))
-                    throw new BadConversionException('Bad data type.');
+                    throw new \RuntimeException('Bad data type.');
 
                 return floatval(str_replace(',', '.', $data));;
             case "datetime":
@@ -297,11 +297,11 @@ class KRepository extends EntityRepository
                 if ($this->validateDateTimeWithoutSeconds($data))
                     return \DateTime::createFromFormat('Y-m-d H:i', $data);
 
-                throw new BadConversionException('Bad data type.');
+                throw new \RuntimeException('Bad data type.');
                 break;
             case "date":
                 if (!$this->validateDate($data))
-                    throw new BadConversionException('Bad data type.');
+                    throw new \RuntimeException('Bad data type.');
 
                 return \DateTime::createFromFormat('Y-m-d', $data);
         }
@@ -318,7 +318,7 @@ class KRepository extends EntityRepository
         if ($type === "float")
             return true;
         else
-            return preg_match("/^\\d+\\.\\d+$/", str_replace(',', '.', $test)) === 1;
+            return preg_match("/^\\d+\\.\\d+$/", str_replace(',', '.', abs($test))) === 1;
     }
 
     protected function validateDateTimeWithSeconds($date)
