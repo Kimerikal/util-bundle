@@ -3,8 +3,31 @@
 namespace Kimerikal\UtilBundle\Entity;
 
 class StrUtil {
+
+    /**
+     * Exchanges numeric value for a letter, Example: 1 is A, 2 is B...
+     *
+     * @param $number - The value to convert
+     * @param bool $toUpper
+     * @return char or empty string
+     */
+    public static function numberToLetter($number, $toUpper = false) {
+        $alphabet = array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','ñ','o','p','q','r','s','t','u','v','w','x','y','z');
+        $index = $number - 1;
+        if (array_key_exists($index, $alphabet))
+            return $toUpper ? mb_strtoupper($alphabet[$index]) : $alphabet[$index];
+
+        return '';
+    }
+
+    /**
+     * Generate a random alphanumeric key
+     *
+     * @param int $length
+     * @return string
+     */
     public static function randomPassword($length = 8) {
-        $alphabet = "abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789";
+        $alphabet = 'abcdefghijklmnopqrstuwxyzABCDEFGHIJKLMNOPQRSTUWXYZ0123456789|!@$#%&?+-_';
         $pass = array();
         $alphaLength = strlen($alphabet) - 1;
         for ($i = 0; $i < $length; $i++) {
@@ -16,19 +39,7 @@ class StrUtil {
     }
 
     public static function slug($string) {
-        $str = str_replace('-', ' ', $string);
-
-        $str = StrUtil::utf8_latin_to_ascii($str);
-
-        $str = trim(mb_strtolower($str));
-
-        $str = str_replace("&#39;", "", $str);
-
-        $str = preg_replace('/(\s|[^A-Za-z0-9\-])+/', '-', $str);
-
-        $str = trim($str, '-');
-
-        return $str;
+        return trim(preg_replace('/(\s|[^A-Za-z0-9\-])+/', '-', str_replace("&#39;", "", trim(mb_strtolower(self::utf8_latin_to_ascii(str_replace('-', ' ', $string)))))), '-');
     }
 
     public static function utf8_latin_to_ascii($string, $case = 0) {
@@ -36,7 +47,6 @@ class StrUtil {
         static $UTF8_UPPER_ACCENTS = null;
 
         if ($case <= 0) {
-
             if (is_null($UTF8_LOWER_ACCENTS)) {
                 $UTF8_LOWER_ACCENTS = array(
                     'à' => 'a',

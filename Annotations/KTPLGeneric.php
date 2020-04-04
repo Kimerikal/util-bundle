@@ -21,4 +21,5 @@ final class KTPLGeneric implements Annotation
     public $rowMainRouteName = 'k_util_kadmin_autogen_edit';
     public $rowMainRouteKey = 'id';
     public $rowMainRouteMehod = 'id';
+    public $rowMainRouteAuto;
 }

@@ -69,10 +69,7 @@ class KUtilRestController extends UtilController
     protected function responseOkList(&$params, &$status, $total, $limit, $offset, $list = [])
     {
         if ($list instanceof Paginator) {
-            $tmp = [];
-            foreach ($list as $l) {
-                $tmp[] = $l;
-            }
+            $tmp = $list->getIterator()->getArrayCopy();
             $list = $tmp;
             unset($tmp);
         }

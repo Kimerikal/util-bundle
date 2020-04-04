@@ -108,7 +108,7 @@ class UtilController extends Controller
         $classData = $this->getEntityUrlMap($entity);
         $entityInfo = $this->doctrine()->getClassMetadata($classData);
         $options = $this->getGenericAnnotations($entityInfo->getName());
-        $repo = $this->doctrineRepo($classData);
+        $repo = $this->_repo($classData);
         $object = $repo->find($id);
         if ($object) {
             try {
@@ -144,7 +144,7 @@ class UtilController extends Controller
             $reflectionProperty = new \ReflectionProperty($entityName, $p->name);
             $data = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\KListRowData');
             if ($data)
-                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order];
+                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type];
         }
 
         $this->sortByOrder($rowData);
@@ -167,11 +167,23 @@ class UtilController extends Controller
     {
         $rowOptions = [];
         foreach ($options as $option) {
-            $formatOption = ['aClass' => $option->aClass, 'icon' => $option->icon, 'name' => $option->title];
+            $formatOption = ['aClass' => $option->aClass, 'icon' => $option->icon, 'name' => $option->title, 'type' => $option->type];
+            if ($option->type == 'modal') {
+                $class = $formatOption['aClass'] . ' ajaxFormLaunch';
+                $formatOption['aClass'] = trim($class);
+                $formatOption['ajax'] = true;
+            }
+
             if (!empty($option->routeAuto)) {
                 $auto = explode(':', $option->routeAuto);
                 $formatOption['route'] = 'k_util_kadmin_autogen_' . $auto[0];
                 $formatOption['routeParams'] = ['entity' => $auto[1], 'id' => 'id'];
+            } else if (!empty($option->urlBase)) {
+                $formatOption['route'] = $option->urlBase;
+                if (!empty($option->urlParams) && count($option->urlParams) > 0) {
+                    $formatOption['routeMethod'] = $option->routeMethod;
+                    $formatOption['routeKey'] = $option->ur;
+                }
             } else {
                 $formatOption['route'] = $option->route;
                 $formatOption['routeMethod'] = $option->routeMethod;

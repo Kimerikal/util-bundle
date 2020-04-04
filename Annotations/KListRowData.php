@@ -15,4 +15,12 @@ final class KListRowData extends Annotation
     public $col = 6;
     public $icon = '';
     public $order = 0;
+    public $editable = false;
+
+    /**
+     * @Enum({"modal", "select", "show", "switch"})
+     */
+    public $type = 'show';
+    public $urlBase = null;
+    public $urlParams = [];
 }
