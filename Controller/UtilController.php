@@ -60,7 +60,7 @@ class UtilController extends Controller
         //$js = 'bundles/kblog/js/list.js';
         $js = null;
 
-        return $this->renderSimpleList($list, '__toString', '', '', '', $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name], null, $actions, $js, '', '', '', $search, $orderHtml, null);
+        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name], null, $actions, $js, '', '', '', $search, $orderHtml, null, $options->rowMainRouteParams);
     }
 
     /**
@@ -130,6 +130,12 @@ class UtilController extends Controller
         $options = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
         if (isset($options->rowOptions) && !empty($options->rowOptions))
             $options->rowOptions = $this->formatRowOptions($options->rowOptions);
+
+        if (!empty($options->rowMainRouteAuto)) {
+            $auto = explode(':', $options->rowMainRouteAuto);
+            $options->rowMainRouteName = 'k_util_kadmin_autogen_' . $auto[0];
+            $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
+        }
 
         return $options;
     }
@@ -224,7 +230,7 @@ class UtilController extends Controller
         return null;
     }
 
-    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = [], $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null, $modalsHtml = '', $batchActionsHtml = '', $customJS = '', $customCSS = '', $multiOnChangeURL = '', $ajaxSearchURL = '', $ajaxListSearchURL = '', $orderListHtml = '', $mainRouteUrl = null)
+    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = [], $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null, $modalsHtml = '', $batchActionsHtml = '', $customJS = '', $customCSS = '', $multiOnChangeURL = '', $ajaxSearchURL = '', $ajaxListSearchURL = '', $orderListHtml = '', $mainRouteUrl = null, $rowMainRouteParams = [])
     {
         $params = array(
             'list' => $list,
@@ -237,6 +243,7 @@ class UtilController extends Controller
             'rowMainRoute' => $rowMainRoute,
             'rowMainRouteKey' => $rowMainRouteKey,
             'rowMainRouteMethod' => $rowMainRouteMethod,
+            'mainRouteParams' => $rowMainRouteParams,
             'rowTitle' => $rowTitleMethod,
             'breadcrumbs' => $breadcrumbs,
             'rowOptions' => $rowOptions,

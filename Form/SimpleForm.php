@@ -223,6 +223,7 @@ class SimpleForm extends AbstractType
                             $bParams['multiple'] = true;
                         if (isset($attrs['expanded']) && $attrs['expanded'])
                             $bParams['expanded'] = true;
+
                     }
 
                     if ($fd->type == 'date') {
@@ -233,7 +234,7 @@ class SimpleForm extends AbstractType
                     }
 
                     if (isset($fd->emptyValue) && !empty($fd->emptyValue)) {
-                        $bParams['empty_data'] = $fd->emptyValue;
+                        $bParams['placeholder'] = $fd->emptyValue;
                     }
 
                     $elements[] = ['name' => $p->name, 'type' => $fd->type, 'params' => $bParams, 'order' => $fd->order];
