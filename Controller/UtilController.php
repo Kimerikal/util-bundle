@@ -137,6 +137,11 @@ class UtilController extends Controller
             $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
         }
 
+        if (empty($options->name))
+            $options->name = $entityName;
+        if (empty($options->plural))
+            $options->plural = $options->name;
+
         return $options;
     }
 
