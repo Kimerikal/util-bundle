@@ -3,6 +3,7 @@
 namespace Kimerikal\UtilBundle\Controller;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Inflector\Inflector;
 use Kimerikal\EstablishmentBundle\Entity\Establishment;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 use Kimerikal\UtilBundle\Form\SimpleForm;
@@ -131,7 +132,7 @@ class UtilController extends Controller
         if (empty($options->name))
             $options->name = $entityName;
         if (empty($options->plural))
-            $options->plural = $options->name;
+            $options->plural = Inflector::pluralize($options->name);
         if (isset($options->rowOptions) && !empty($options->rowOptions))
             $options->rowOptions = $this->formatRowOptions($options->rowOptions);
         if (!empty($options->rowMainRouteAuto)) {
