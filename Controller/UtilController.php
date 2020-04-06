@@ -31,7 +31,7 @@ class UtilController extends Controller
     {
         $classData = $this->getEntityUrlMap($entity);
         $entityInfo = $this->_em()->getClassMetadata($classData);
-        $options = $this->getGenericAnnotations($entityInfo->getName());
+        $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
         if (is_string($page) && $page != "1") {
             $page = intval(str_replace('pagina-', '', $page));
         }
@@ -80,7 +80,7 @@ class UtilController extends Controller
             $object = new $objType;
         }
 
-        $options = $this->getGenericAnnotations($entityInfo->getName());
+        $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
 
         $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
         $save = $this->checkSaveForm($r, $form);
@@ -101,14 +101,17 @@ class UtilController extends Controller
 
     /**
      * @Route("/kadmin/autogen/remove/{entity}/{id}", name="k_util_kadmin_autogen_remove", methods={"POST","GET"})
+     * @param $entity
+     * @param $id
      * @return Response
+     * @throws \Exception
      */
     public function delete($entity, $id)
     {
         $resp = array('done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.');
         $classData = $this->getEntityUrlMap($entity);
         $entityInfo = $this->doctrine()->getClassMetadata($classData);
-        $options = $this->getGenericAnnotations($entityInfo->getName());
+        $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
         $repo = $this->_repo($classData);
         $object = $repo->find($id);
         if ($object) {
@@ -124,10 +127,10 @@ class UtilController extends Controller
         return new JsonResponse($resp);
     }
 
-    public function getGenericAnnotations($entityName)
+    public function getGenericAnnotations($entityClass, $entityName)
     {
         $reader = new AnnotationReader();
-        $reflClass = new \ReflectionClass($entityName);
+        $reflClass = new \ReflectionClass($entityClass);
         $options = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
         if (empty($options->name))
             $options->name = $entityName;
