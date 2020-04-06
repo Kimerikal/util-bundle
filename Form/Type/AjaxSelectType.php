@@ -15,12 +15,14 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Doctrine\ORM\EntityManager;
 use Kimerikal\UtilBundle\Model\Select2FormField;
 
-class AjaxSelectType extends AbstractType {
+class AjaxSelectType extends AbstractType
+{
 
     protected $router;
     protected $em;
 
-    public function __construct($router, EntityManager $em) {
+    public function __construct($router, EntityManager $em)
+    {
         $this->router = $router;
         $this->em = $em;
     }
@@ -28,21 +30,47 @@ class AjaxSelectType extends AbstractType {
     /**
      * {@inheritdoc}
      */
-    public function buildForm(FormBuilderInterface $builder, array $options) {
+    public function buildForm(FormBuilderInterface $builder, array $options)
+    {
         $builder->setAttribute('attr', array_merge($options['attr'], array('class' => 'form-control ajax-select', 'data-ajax-url' => $this->router->generate($options['route']))));
-       /* $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
-            if (empty($event->getData()))
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
+            $obj = $event->getData();
+            if (!$obj)
                 return;
-            $bdData = $this->em->getRepository($options['target_object'])->find($event->getData());
-            if ($bdData)
-                $event->setData($bdData);
-        });*/
+
+            $form = $event->getForm();
+            $child = $form->get($p->name);
+            $data = $child->getData();
+            $myOptions = $child->getConfig()->getOptions();
+            $name = $child->getName();
+
+            $choices = array($obj[$name] => $obj[$name]);
+            if ($data instanceOf \Doctrine\ORM\PersistentCollection) {
+                $data = $data->toArray();
+            }
+            if ($data != null) {
+                if (is_array($data)) {
+                    foreach ($data as $entity) {
+                        $choices[] = $entity;
+                    }
+                } else {
+                    $choices[] = $data;
+                }
+            }
+
+            $arr = array('choices' => $choices, 'label' => $myOptions['label'], 'attr' => $myOptions['attr'], 'route' => $myOptions['route']);
+            if ($fd->type == 'entity_ajax_select')
+                $arr['class'] = $myOptions['target_object'];
+
+            $form->add($name, $fd->type, $arr);
+        });
     }
 
     /**
      * {@inheritdoc}
      */
-    public function finishView(FormView $view, FormInterface $form, array $options) {
+    public function finishView(FormView $view, FormInterface $form, array $options)
+    {
         parent::finishView($view, $form, $options);
         $data = $view->vars['data'];
         $view->vars['curVal'] = null;
@@ -53,7 +81,7 @@ class AjaxSelectType extends AbstractType {
                     $val = new \stdClass();
                     $val->value = $bdData->select2id();
                     $val->text = $bdData->select2text();
-                    
+
                     $view->vars['curVal'] = $val;
                 }
             } catch (\Exception $e) {
@@ -65,27 +93,31 @@ class AjaxSelectType extends AbstractType {
     /**
      * {@inheritdoc}
      */
-    public function buildView(FormView $view, FormInterface $form, array $options) {
+    public function buildView(FormView $view, FormInterface $form, array $options)
+    {
         $view->vars['attr'] = $form->getConfig()->getAttribute('attr');
-       /* if (!empty($view->vars['value']) && is_object($view->vars['value'])) {
-            $view->vars['data'] = $view->vars['value'];
-            $view->vars['value'] = $view->vars['value']->getId();
-        }*/
+        /* if (!empty($view->vars['value']) && is_object($view->vars['value'])) {
+             $view->vars['data'] = $view->vars['value'];
+             $view->vars['value'] = $view->vars['value']->getId();
+         }*/
     }
 
     /**
      * {@inheritdoc}
      */
-    public function configureOptions(OptionsResolver $resolver) {
+    public function configureOptions(OptionsResolver $resolver)
+    {
         $resolver->setRequired(array('route', 'target_object'));
         $resolver->setDefaults(array('choices' => array(), 'choices_as_value' => true, 'target_object' => null));
     }
 
-    public function getParent() {
+    public function getParent()
+    {
         return ChoiceType::class;
     }
 
-    public function getName() {
+    public function getName()
+    {
         return 'ajax_select';
     }
 
