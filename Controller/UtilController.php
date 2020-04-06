@@ -128,19 +128,17 @@ class UtilController extends Controller
         $reader = new AnnotationReader();
         $reflClass = new \ReflectionClass($entityName);
         $options = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
+        if (empty($options->name))
+            $options->name = $entityName;
+        if (empty($options->plural))
+            $options->plural = $options->name;
         if (isset($options->rowOptions) && !empty($options->rowOptions))
             $options->rowOptions = $this->formatRowOptions($options->rowOptions);
-
         if (!empty($options->rowMainRouteAuto)) {
             $auto = explode(':', $options->rowMainRouteAuto);
             $options->rowMainRouteName = 'k_util_kadmin_autogen_' . $auto[0];
             $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
         }
-
-        if (empty($options->name))
-            $options->name = $entityName;
-        if (empty($options->plural))
-            $options->plural = $options->name;
 
         return $options;
     }
