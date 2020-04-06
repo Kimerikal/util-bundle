@@ -10,6 +10,7 @@ use Kimerikal\UtilBundle\Entity\TimeUtil;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Validator\Constraints\Date;
 use Tetranz\Select2EntityBundle\Form\Type\Select2EntityType;
 
 class SimpleForm extends AbstractType
@@ -88,7 +89,7 @@ class SimpleForm extends AbstractType
                         if ($fd->type == 'entity_ajax_select')
                             $arr['class'] = $myOptions['target_object'];
 
-                        $form->add($name, $fd->type, $arr);
+                        //$form->add($name, $fd->type, $arr);
                     }
                 }
             }
@@ -100,7 +101,6 @@ class SimpleForm extends AbstractType
         $props = $reflectionClass->getProperties(\ReflectionProperty::IS_STATIC | \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
         $elements = [];
         foreach ($props as $p) {
-            //$reflectionProperty = new \ReflectionProperty($this->class, $p->name);
             $fd = $reader->getPropertyAnnotation($p, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
             if ($fd) {
                 if (!empty($this->group) && isset($fd->groups) && count($fd->groups) > 0 && !in_array($this->group, $fd->groups) && !array_key_exists($this->group, $fd->groups))
@@ -147,7 +147,7 @@ class SimpleForm extends AbstractType
                             $val = $obj->$method();
                         }
 
-                        if ($val && !is_string($val) && \get_class($val) == 'DateTime') {
+                        if ($val && $val instanceof \DateTime) {
                             $obj->$setMethod($this->dateToStr($val));
                         }
 
@@ -223,7 +223,6 @@ class SimpleForm extends AbstractType
                             $bParams['multiple'] = true;
                         if (isset($attrs['expanded']) && $attrs['expanded'])
                             $bParams['expanded'] = true;
-
                     }
 
                     if ($fd->type == 'date') {
