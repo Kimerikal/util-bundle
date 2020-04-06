@@ -40,8 +40,7 @@ class SimpleForm extends AbstractType
             $reflectionClass = new \ReflectionClass($this->class);
             $props = $reflectionClass->getProperties();
             foreach ($props as $p) {
-                $reflectionProperty = new \ReflectionProperty($this->class, $p->name);
-                $fd = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
+                $fd = $reader->getPropertyAnnotation($p, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
                 if ($fd) {
                     if ($fd->type == 'entity') {
                         $obj = $event->getData();
@@ -100,7 +99,6 @@ class SimpleForm extends AbstractType
         $props = $reflectionClass->getProperties(\ReflectionProperty::IS_STATIC | \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
         $elements = [];
         foreach ($props as $p) {
-            //$reflectionProperty = new \ReflectionProperty($this->class, $p->name);
             $fd = $reader->getPropertyAnnotation($p, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
             if ($fd) {
                 if (!empty($this->group) && isset($fd->groups) && count($fd->groups) > 0 && !in_array($this->group, $fd->groups) && !array_key_exists($this->group, $fd->groups))
@@ -205,7 +203,7 @@ class SimpleForm extends AbstractType
 
                     if ($fd->type == 'enum') {
                         $fd->type = 'choice';
-                        $orm = $reader->getPropertyAnnotation($reflectionProperty, 'Doctrine\ORM\Mapping\Column');
+                        $orm = $reader->getPropertyAnnotation($p, 'Doctrine\ORM\Mapping\Column');
                         $definitions = explode(',', str_replace(' ', '', str_replace('\'', '', str_replace('\"', '', str_replace(')', '', str_ireplace('ENUM(', '', $orm->columnDefinition))))));
                         $choices = [];
                         foreach ($definitions as $choice) {
