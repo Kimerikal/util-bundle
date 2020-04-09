@@ -88,7 +88,7 @@ class SimpleForm extends AbstractType
                         if ($fd->type == 'entity_ajax_select')
                             $arr['class'] = $myOptions['target_object'];
 
-                        //$form->add($name, $fd->type, $arr);
+                        $form->add($name, $fd->type, $arr);
                     }
                 }
             }
@@ -232,7 +232,7 @@ class SimpleForm extends AbstractType
                     }
 
                     if (isset($fd->emptyValue) && !empty($fd->emptyValue)) {
-                        $bParams['placeholder'] = $fd->emptyValue;
+                        $bParams['empty_data'] = $fd->emptyValue;
                     }
 
                     $elements[] = ['name' => $p->name, 'type' => $fd->type, 'params' => $bParams, 'order' => $fd->order];

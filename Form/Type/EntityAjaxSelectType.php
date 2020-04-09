@@ -15,6 +15,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Doctrine\ORM\EntityManager;
 use Kimerikal\UtilBundle\Model\Select2FormField;
+use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 
 class EntityAjaxSelectType extends AbstractType
 {
@@ -79,7 +80,7 @@ class EntityAjaxSelectType extends AbstractType
                     $view->vars['curVal'] = $val;
                 }
             } catch (\Exception $e) {
-                error_log($e->getMessage());
+                ExceptionUtil::logException($e, 'EntityAjaxSelectType::finishView');
             }
         }
     }
@@ -90,10 +91,6 @@ class EntityAjaxSelectType extends AbstractType
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
         $view->vars['attr'] = $form->getConfig()->getAttribute('attr');
-        /* if (!empty($view->vars['value']) && is_object($view->vars['value'])) {
-             $view->vars['data'] = $view->vars['value'];
-             $view->vars['value'] = $view->vars['value']->getId();
-         }*/
     }
 
     /**

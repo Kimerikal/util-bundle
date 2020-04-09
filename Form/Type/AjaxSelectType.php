@@ -33,18 +33,11 @@ class AjaxSelectType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder->setAttribute('attr', array_merge($options['attr'], array('class' => 'form-control ajax-select', 'data-ajax-url' => $this->router->generate($options['route']))));
-        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
+        /*$builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
             $obj = $event->getData();
-            if (!$obj)
-                return;
-
-            $form = $event->getForm();
-            $child = $form->get($p->name);
+            $child = $event->getForm();
             $data = $child->getData();
-            $myOptions = $child->getConfig()->getOptions();
-            $name = $child->getName();
-
-            $choices = array($obj[$name] => $obj[$name]);
+            $choices = array($obj => $obj);
             if ($data instanceOf \Doctrine\ORM\PersistentCollection) {
                 $data = $data->toArray();
             }
@@ -58,12 +51,8 @@ class AjaxSelectType extends AbstractType
                 }
             }
 
-            $arr = array('choices' => $choices, 'label' => $myOptions['label'], 'attr' => $myOptions['attr'], 'route' => $myOptions['route']);
-            if ($fd->type == 'entity_ajax_select')
-                $arr['class'] = $myOptions['target_object'];
-
-            $form->add($name, $fd->type, $arr);
-        });
+           $child->getParent()->add($child->getName(), 'ajax_select', array_merge(['choices' => $choices], $child->getConfig()->getOptions()));
+        });*/
     }
 
     /**
@@ -96,10 +85,6 @@ class AjaxSelectType extends AbstractType
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
         $view->vars['attr'] = $form->getConfig()->getAttribute('attr');
-        /* if (!empty($view->vars['value']) && is_object($view->vars['value'])) {
-             $view->vars['data'] = $view->vars['value'];
-             $view->vars['value'] = $view->vars['value']->getId();
-         }*/
     }
 
     /**
