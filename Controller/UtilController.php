@@ -60,8 +60,9 @@ class UtilController extends Controller
         $search = '';
         //$js = 'bundles/kblog/js/list.js';
         $js = null;
+        $newElement = $options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null;
 
-        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name], null, $actions, $js, '', '', '', $search, $orderHtml, null, $options->rowMainRouteParams);
+        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, $newElement, null, $actions, $js, '', '', '', $search, $orderHtml, null, $options->rowMainRouteParams);
     }
 
     /**
@@ -344,7 +345,7 @@ class UtilController extends Controller
     protected function mailTemplateSend($title, $content, $to, $subTitle = null)
     {
         $view = $this->renderView('AdminBundle:Mail:info-email.html.twig', array('title' => $title, 'subTitle' => $subTitle, 'content' => $content));
-        return $this->mailing($title, array($this->parameter(self::DEFAULT_MAIL) => 'Asociación Celiaca Aragonesa'), $to, $view);
+        return $this->mailing($title, array($this->parameter(self::DEFAULT_MAIL) => $this->parameter('app.title')), $to, $view);
     }
 
     protected function mailing($subject, $from, $to, $view)
