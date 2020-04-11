@@ -79,10 +79,10 @@ class KUtilRestController extends UtilController
         $status = Response::HTTP_OK;
     }
 
-    protected function responseOkDetail(&$params, &$status)
+    protected function responseOkDetail(&$params, &$status, $data = null)
     {
         $params['done'] = true;
-        $params['data'] = null;
+        $params['data'] = $data;
         $params['msg'] = 'Ok';
         $status = Response::HTTP_OK;
     }
