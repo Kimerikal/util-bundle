@@ -6,7 +6,7 @@ namespace Kimerikal\UtilBundle\Entity;
 
 class MapsUtil
 {
-    public static function findLatLngFromAddress(string $address, string $apiKey)
+    public static function findLatLngFromAddress(string $address, string $apiKey, array $validTypes = ['establishment', 'food', 'restaurant', 'street_address'])
     {
         $url = 'https://maps.googleapis.com/maps/api/geocode/json?key=' . $apiKey . '&components=country:ES';
 
@@ -21,7 +21,7 @@ class MapsUtil
             for ($i = 0; $i < count($results); $i++) {
                 $matched = 0;
                 foreach ($results[$i]->types as $type) {
-                    if ($type == 'establishment' || $type == 'food' || $type == 'restaurant')
+                    if (in_array($type, $validTypes))
                         $matched++;
                 }
 
