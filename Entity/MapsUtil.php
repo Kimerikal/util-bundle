@@ -6,16 +6,11 @@ namespace Kimerikal\UtilBundle\Entity;
 
 class MapsUtil
 {
-    public static function findLatLngFromAddress($formatedAddress, $localName = null)
+    public static function findLatLngFromAddress(string $address, string $apiKey)
     {
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyANB7av_2VybbhmiBeDQ2Om06J0wU59GTk&components=country:ES";
-        /*$name = $client->getName();
-        $formatedAddress = $client->getAddress()->formatAddress();*/
-        $address = $formatedAddress;
-        if (!empty($localName))
-            $address = $localName .','.$formatedAddress;
+        $url = 'https://maps.googleapis.com/maps/api/geocode/json?key=' . $apiKey . '&components=country:ES';
 
-        $tail = '&address=' . urlencode($address);
+        $tail = '&address=' . \urlencode($address);
         $data = \json_decode(\file_get_contents($url . $tail));
         if ($data->status == 'OK') {
             $results = $data->results;
