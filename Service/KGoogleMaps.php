@@ -1,14 +1,19 @@
 <?php
 
+namespace Kimerikal\UtilBundle\Service;
 
-namespace Kimerikal\UtilBundle\Entity;
-
-
-class MapsUtil
+class KGoogleMaps
 {
-    public static function getDataFromAddress(string $address, string $apiKey)
+    private $apiKey;
+
+    public function __construct($apiKey)
     {
-        $url = 'https://maps.googleapis.com/maps/api/geocode/json?key=' . $apiKey . '&components=country:ES';
+        $this->apiKey = $apiKey;
+    }
+
+    public function getDataFromAddress(string $address)
+    {
+        $url = 'https://maps.googleapis.com/maps/api/geocode/json?key=' . $this->apiKey . '&components=country:ES';
 
         $tail = '&address=' . \urlencode($address);
         $data = \json_decode(\file_get_contents($url . $tail));
@@ -18,9 +23,9 @@ class MapsUtil
         return null;
     }
 
-    public static function findLatLngFromAddress(string $address, string $apiKey, array $validTypes = ['establishment', 'food', 'restaurant', 'street_address'])
+    public function findLatLngFromAddress(string $address, array $validTypes = ['establishment', 'food', 'restaurant', 'street_address'])
     {
-        $url = 'https://maps.googleapis.com/maps/api/geocode/json?key=' . $apiKey . '&components=country:ES';
+        $url = 'https://maps.googleapis.com/maps/api/geocode/json?key=' . $this->apiKey . '&components=country:ES';
 
         $tail = '&address=' . \urlencode($address);
         $data = \json_decode(\file_get_contents($url . $tail));

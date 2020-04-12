@@ -33,3 +33,7 @@ services:
             - '@doctrine.orm.entity_manager'
         tags:
             -  { name: form.type }
+
+    k_service.google_maps:
+        class: Kimerikal\UtilBundle\Service\KGoogleMaps
+        arguments: ['%app.google_api_key%']
