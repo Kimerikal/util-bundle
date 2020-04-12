@@ -3,7 +3,11 @@
 
 namespace Kimerikal\UtilBundle\Entity;
 
-
+/**
+ * Class MapsUtil
+ * @package Kimerikal\UtilBundle\Entity
+ * @deprecated use KGoogleMaps Service instead.
+ */
 class MapsUtil
 {
     public static function getDataFromAddress(string $address, string $apiKey)
