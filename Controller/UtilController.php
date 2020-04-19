@@ -366,7 +366,7 @@ class UtilController extends Controller
 
     protected function userGranted($role)
     {
-        return $this->get('security.context')->isGranted($role);
+        return $this->get('security.token_storage')->isGranted($role);
     }
 
     protected function getFullUrl(Request $request, $path = '', $clear = array('/app_dev.php'))
@@ -480,11 +480,6 @@ class UtilController extends Controller
         $form->handleRequest($r);
         if ($save && $form->isSubmitted() && $form->isValid()) {
             $obj = $form->getData();
-
-            if (\method_exists($obj, 'setUpdatedAt')) {
-                $obj->setUpdatedAt(new \DateTime());
-            }
-
             $this->callBackExec($form, $callbackBefore);
             $this->persist($obj);
             $this->callBackExec($form, $callbackAfter);

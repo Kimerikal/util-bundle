@@ -3,8 +3,10 @@
 namespace Kimerikal\UtilBundle\Form\Type;
 
 use Kimerikal\UtilBundle\Entity\TimeUtil;
+use Kimerikal\UtilBundle\Form\DataTransformer\EntityAjaxSelectTransformer;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\CallbackTransformer;
 use Symfony\Component\Form\ChoiceList\ArrayChoiceList;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormEvent;
@@ -35,30 +37,8 @@ class EntityAjaxSelectType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder->setAttribute('attr', array_merge($options['attr'], array('class' => 'form-control ajax-select', 'data-ajax-url' => $this->router->generate($options['route']))));
-        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) use ($options) {
-            if (empty($event->getData()))
-                return;
-
-            $data = $event->getData();
-            $choices = array();
-            if(is_array($data)){
-                foreach($data as $choice){
-                    $choices[$choice] = $choice;
-                }
-            } else{
-                $choices[$data] = (string) $data;
-            }
-
-            $event->getForm()->getParent()->add($event->getForm()->getName(), 'entity_ajax_select', array('class' => $options['target_object'], 'choices' => $choices, 'label' => $options['label'], 'attr' => $options['attr'], 'route' => $options['route']));
-
-           /* $bdData = $this->em->getRepository($options['target_object'])->find($event->getData());
-            if ($bdData) {
-               // $event->setData($bdData);
-                //$event->setData([$bdData->getId() => $bdData]);
-                $event->getForm()->getParent()->add($event->getForm()->getName(), 'entity_ajax_select', array('class' => $options['target_object'], 'choices' => $choices, 'data' => $bdData->getId(), 'label' => $options['label'], 'attr' => $options['attr'], 'route' => $options['route']));
-               // $event->getForm()->getParent()->add($event->getForm()->getName(), 'entity_ajax_select', array('class' => $options['target_object'], 'choice_value' => function($entity) use ($bdData) {return $bdData;}, 'choices' => [$bdData->getId() => $bdData], 'route' => $options['route']));
-            }*/
-        });
+        $builder->resetViewTransformers();
+        $builder->addViewTransformer(new EntityAjaxSelectTransformer($this->em, $options['target_object']), true);
     }
 
     /**
@@ -72,7 +52,7 @@ class EntityAjaxSelectType extends AbstractType
         if (!empty($data)) {
             try {
                 $bdData = $this->em->getRepository($options['target_object'])->find($data);
-                if ($data instanceof Select2FormField) {
+                if ($bdData instanceof Select2FormField) {
                     $val = new \stdClass();
                     $val->value = $bdData->select2id();
                     $val->text = $bdData->select2text();
@@ -104,7 +84,7 @@ class EntityAjaxSelectType extends AbstractType
 
     public function getParent()
     {
-        return EntityType::class;
+        return 'entity';
     }
 
     public function getName()

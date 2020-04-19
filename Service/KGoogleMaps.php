@@ -30,11 +30,11 @@ class KGoogleMaps
      * @param string $lang
      * @return array|null
      */
-    public function directions(array $origins, array $destinations, array $waypoints = null, string $mode = self::KGM_MODE_DRIVING, string $avoid = null, string $lang = 'es-ES')
+    public function directions(array $origins, array $destinations, array $waypoints = null, string $mode = self::KGM_MODE_DRIVING, array $avoid = null, string $lang = 'es-ES')
     {
         $url = 'https://maps.googleapis.com/maps/api/directions/json?units=metric&mode=' . $mode . '&language=' . $lang . '&key=' . $this->apiKey;
         if (!empty($avoid))
-            $url .= '&avoid=' . $avoid;
+            $url .= '&avoid=' . implode('|', $avoid);
 
         $url .= '&origin=' . \urlencode(implode(',', $origins));
         $url .= '&destination=' . \urlencode(implode(',', $destinations));

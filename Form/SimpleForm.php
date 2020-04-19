@@ -10,8 +10,10 @@ use Kimerikal\UtilBundle\Entity\TimeUtil;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Validator\Constraints\Date;
 use Tetranz\Select2EntityBundle\Form\Type\Select2EntityType;
+use Symfony\Component\Form\ResolvedFormTypeInterface;
 
 class SimpleForm extends AbstractType
 {
@@ -19,6 +21,7 @@ class SimpleForm extends AbstractType
     private $trans;
     private $class;
     private $group;
+    private $accessor;
 
     public function __construct($class, $trans, $group = null)
     {
@@ -36,6 +39,14 @@ class SimpleForm extends AbstractType
         /**
          * Event Listener
          */
+      /*  $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+            foreach ($event->getForm()->all() as $child) {
+                if ($child->getConfig()->getType()->getName() == 'entity_ajax_select') {
+                    $this->populateAjaxChoice($event, $child->getName(), $child->getConfig()->getType());
+                }
+            }
+        });*/
+
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $reader = new AnnotationReader();
             $reflectionClass = new \ReflectionClass($this->class);
@@ -59,7 +70,7 @@ class SimpleForm extends AbstractType
                                 }
                             }
                         }
-                    } else if ($fd->type == 'ajax_select' /*|| $fd->type == 'entity_ajax_select'*/) {
+                    } else if ($fd->type == 'ajax_select') {
                         $obj = $event->getData();
                         if (empty($obj[$p->name]))
                             continue;
@@ -71,24 +82,21 @@ class SimpleForm extends AbstractType
                         $name = $child->getName();
 
                         $choices = array($obj[$name] => $obj[$name]);
-                        if ($data instanceOf \Doctrine\ORM\PersistentCollection) {
+                        if ($data instanceof \Doctrine\ORM\PersistentCollection) {
                             $data = $data->toArray();
                         }
                         if ($data != null) {
                             if (is_array($data)) {
                                 foreach ($data as $entity) {
-                                    $choices[] = $entity;
+                                    $choices[$entity] = $entity;
                                 }
                             } else {
-                                $choices[] = $data;
+                                $choices[$data] = $data;
                             }
                         }
 
-                        $arr = array('choices' => $choices, 'label' => $myOptions['label'], 'attr' => $myOptions['attr'], 'route' => $myOptions['route']);
-                        if ($fd->type == 'entity_ajax_select')
-                            $arr['class'] = $myOptions['target_object'];
-
-                        $form->add($name, $fd->type, $arr);
+                        $myOptions['choices'] = $choices;
+                        $form->add($name, $fd->type, $myOptions);
                     }
                 }
             }
@@ -302,5 +310,71 @@ class SimpleForm extends AbstractType
     public function getGroup()
     {
         return $this->group;
+    }
+
+    private function getPropertyAccessor()
+    {
+        $this->accessor = PropertyAccess::createPropertyAccessor();
+    }
+
+    private function populateAjaxChoice(FormEvent $event, $childName, $type)
+    {
+        $form = $event->getForm();
+        $options = $form->get($childName)->getConfig()->getOptions();
+
+        $data = $event->getData();
+        if (is_array($data)) {
+            $property = '[' . $childName . ']';
+        } else {
+            $property = $childName;
+        }
+
+        $data = $this->getValue($data, $property);
+        if (!$data) {
+            return;
+        }
+        $choices = $this->getChoices($data, $options);
+        $options['choices'] = $choices;
+
+        $form->add($childName, $type->getInnerType(), $options);
+    }
+
+    private function getValue($data, $property)
+    {
+        if (!$this->accessor) {
+            $this->getPropertyAccessor();
+        }
+
+        return $this->accessor->getValue($data, $property);
+    }
+
+    private function getChoices($data, $options)
+    {
+        if (is_object($data)) {
+            if ($data instanceof \Traversable) {
+                return $data;
+            } else {
+                return array($data);
+            }
+        } else {
+            return $options['em']->getRepository($options['class'])->findById($data);
+        }
+    }
+
+    private function getListenedType(ResolvedFormTypeInterface $type)
+    {
+        $return = array('originalType' => get_class($type->getInnerType()));
+
+        while ($type) {
+            if (in_array(get_class($type->getInnerType()), $this->enabledTypes)) {
+                $return['listenedType'] = get_class($type->getInnerType());
+
+                return $return;
+            }
+
+            $type = $type->getParent();
+        }
+
+        return false;
     }
 }
