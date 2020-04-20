@@ -187,6 +187,10 @@ class SimpleForm extends AbstractType
                         $bParams['target_object'] = $fd->targetObject;
                         $bParams['class'] = $fd->targetObject;
                         $bParams['choice_label'] = 'id';
+                        if (isset($attrs['multiple']) && $attrs['multiple'])
+                            $bParams['multiple'] = true;
+                        if (isset($attrs['expanded']) && $attrs['expanded'])
+                            $bParams['expanded'] = true;
                     } else if ($fd->type == 'json_array') {
                         if (isset($fd->format))
                             $bParams['format'] = $fd->format;
