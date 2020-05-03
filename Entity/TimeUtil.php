@@ -2,15 +2,17 @@
 
 namespace Kimerikal\UtilBundle\Entity;
 
-class TimeUtil {
+class TimeUtil
+{
 
     /**
      * Pasa una fecha en formato MySQL a formato Español.
-     * 
+     *
      * @param String $fecha
      * @return String -- La fecha en español.
      */
-    public static function fechaSpanish($fecha) {
+    public static function fechaSpanish($fecha)
+    {
         return $fechaES;
     }
 
@@ -20,11 +22,13 @@ class TimeUtil {
      * @param String $fecha
      * @return String -- La fecha en inglés.
      */
-    public static function fechaInglesa() {
+    public static function fechaInglesa()
+    {
         return $fechaEN;
     }
 
-    public static function fromMySQLToLocal($dateStr, $toFormat = 'd-m-Y') {
+    public static function fromMySQLToLocal($dateStr, $toFormat = 'd-m-Y')
+    {
         $date = \DateTime::createFromFormat('Y-m-d', $dateStr);
         if (!$date)
             return "";
@@ -32,7 +36,8 @@ class TimeUtil {
         return $date->format($toFormat);
     }
 
-    public static function fromLocalToMySQL($dateStr, $fromFormat = 'd-m-Y') {
+    public static function fromLocalToMySQL($dateStr, $fromFormat = 'd-m-Y')
+    {
         $date = \DateTime::createFromFormat($fromFormat, $dateStr);
         if (!$date)
             return "";
@@ -40,11 +45,13 @@ class TimeUtil {
         return $date->format('Y-m-d H:i:s');
     }
 
-    public static function fromStrToDate($dateStr, $fromFormat = 'd-m-Y') {
+    public static function fromStrToDate($dateStr, $fromFormat = 'd-m-Y')
+    {
         return \DateTime::createFromFormat($fromFormat, $dateStr);
     }
 
-    public static function humanTiming($timeStr, $in = '') {
+    public static function humanTiming($timeStr, $in = '')
+    {
         $time = \strtotime($timeStr);
         $time = \time() - $time;
         if (!self::isPast($timeStr, 'Y-m-d'))
@@ -96,12 +103,13 @@ class TimeUtil {
 
     /**
      * Check if a given date is in the past.
-     * 
+     *
      * @param type $dateStr - Date in a string or DateTime accepted
      * @param type $fromFormat - String with date format
      * @return boolean
      */
-    public static function isPast($dateStr, $fromFormat = 'Y-m-d') {
+    public static function isPast($dateStr, $fromFormat = 'Y-m-d')
+    {
         if (!is_string($dateStr))
             $dateStr = $dateStr->format($fromFormat);
 
@@ -113,21 +121,23 @@ class TimeUtil {
         return false;
     }
 
-    public static function isToday($dateStr, $fromFormat = 'Y-m-d') {
-        $date = null; 
+    public static function isToday($dateStr, $fromFormat = 'Y-m-d')
+    {
+        $date = null;
         if (is_string($dateStr))
             $date = \DateTime::createFromFormat($fromFormat, $dateStr);
-        else 
-            $date = $dateStr; 
-        
-        $today = new \DateTime("now"); 
+        else
+            $date = $dateStr;
+
+        $today = new \DateTime("now");
         if ($date->format('Y-m-d') == $today->format('Y-m-d'))
             return true;
 
         return false;
     }
 
-    public static function mothStrToNumber($monthStr) {
+    public static function mothStrToNumber($monthStr)
+    {
         $moths = array(
             "enero" => "01",
             "febrero" => "02",
@@ -146,7 +156,8 @@ class TimeUtil {
         return $moths[\strtolower($monthStr)];
     }
 
-    public static function mothNumberToStr($monthNum) {
+    public static function mothNumberToStr($monthNum)
+    {
         $moths = array(
             "01" => "Enero",
             "02" => "Febrero",
@@ -165,4 +176,13 @@ class TimeUtil {
         return $moths[$monthNum];
     }
 
+    public static function secondsBetweenTwoDates(\DateTime $init, \DateTime $end)
+    {
+        return $end->getTimestamp() - $init->getTimestamp();
+    }
+
+    public static function formatSeconds($seconds, $separator = ':', $separatorSeconds = '.')
+    {
+        return sprintf("%02d%s%02d%s%02d", floor($seconds/3600), $separator, ($seconds/60)%60, $separatorSeconds, $seconds%60);
+    }
 }

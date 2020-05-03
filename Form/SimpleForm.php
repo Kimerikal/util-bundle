@@ -39,14 +39,6 @@ class SimpleForm extends AbstractType
         /**
          * Event Listener
          */
-      /*  $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
-            foreach ($event->getForm()->all() as $child) {
-                if ($child->getConfig()->getType()->getName() == 'entity_ajax_select') {
-                    $this->populateAjaxChoice($event, $child->getName(), $child->getConfig()->getType());
-                }
-            }
-        });*/
-
         $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
             $reader = new AnnotationReader();
             $reflectionClass = new \ReflectionClass($this->class);
@@ -131,7 +123,12 @@ class SimpleForm extends AbstractType
                       'type' => \Kimerikal\AccountBundle\Form\DeliveryItemType::class,
                       'allow_add' => true
                       )); */
-                } else if ($fd->type != 'customForm') {
+                } else if ($fd->type == 'customForm') {
+                    $class = $fd->className;
+                    $elements[] = ['name' => $p->name, 'type' => new $class(1, $this->trans), 'params' => [], 'order' => $fd->order];
+                } else if ($fd->type == 'simpleForm') {
+                    $elements[] = ['name' => $p->name, 'type' => new SimpleForm($fd->className, $this->trans), 'params' => [], 'order' => $fd->order];
+                } else {
                     $attrs = array(
                         'class' => 'form-control' . ($fd->type == 'checkbox' ? ' make-switch' : ''),
                         'placeholder' => $fd->placeholder,
@@ -142,7 +139,7 @@ class SimpleForm extends AbstractType
                     $bParams = array('required' => $fd->required, 'mapped' => $fd->mapped);
 
                     if (!empty($fd->customAttrs)) {
-                        $obj = $options['data'];
+                        $obj = isset($options['data']) ? $options['data'] : null;
                         $val = '';
                         $setMethod = '';
                         if (\method_exists($obj, $p->name)) {
@@ -248,9 +245,6 @@ class SimpleForm extends AbstractType
                     }
 
                     $elements[] = ['name' => $p->name, 'type' => $fd->type, 'params' => $bParams, 'order' => $fd->order];
-                } else {
-                    $class = $fd->className;
-                    $elements[] = ['name' => $p->name, 'type' => new $class(1, $this->trans), 'params' => [], 'order' => $fd->order];
                 }
             }
         }

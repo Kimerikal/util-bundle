@@ -10,6 +10,9 @@ use Doctrine\Common\Annotations\Annotation;
  */
 final class FormData extends Annotation {
 
+    /**
+     * @Enum({"text", "number", "decimal", "email", "textarea", "ckeditor", "checkbox", "entity", "customForm", "simpleForm", "date", "imagecrop", "ajax_select", "entity_ajax_select", "choice", "enum", "file", "hidden"})
+     */
     public $type;
     public $label;
     public $col = 12;
