@@ -214,10 +214,10 @@ class SimpleForm extends AbstractType
                     if ($fd->type == 'enum') {
                         $fd->type = 'choice';
                         $orm = $reader->getPropertyAnnotation($p, 'Doctrine\ORM\Mapping\Column');
-                        $definitions = explode(',', str_replace(' ', '', str_replace('\'', '', str_replace('\"', '', str_replace(')', '', str_ireplace('ENUM(', '', $orm->columnDefinition))))));
+                        $definitions = explode(',', str_replace('\'', '', str_replace('\"', '', str_replace(')', '', str_ireplace('ENUM(', '', $orm->columnDefinition)))));
                         $choices = [];
                         foreach ($definitions as $choice) {
-                            $choices[$choice] = $choice;
+                            $choices[trim($choice)] = trim($choice);
                         }
                         $bParams['choices'] = $choices;
                         $bParams['choices_as_values'] = true;
