@@ -22,6 +22,7 @@ final class KListRowOption extends Annotation
     public $ajax = false;
     public $aClass = '';
     public $routeAuto = null;
+    public $roles = [];
     /**
      * @Enum({"modal", "url"})
      */

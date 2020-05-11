@@ -181,7 +181,19 @@ class UtilController extends Controller
     {
         $rowOptions = [];
         foreach ($options as $option) {
-            $formatOption = ['aClass' => $option->aClass, 'icon' => $option->icon, 'name' => $option->title, 'type' => $option->type];
+            if (count($option->roles) > 0) {
+                $continue = true;
+                foreach ($option->roles as $role) {
+                    if ($this->isGranted($role)) {
+                        $continue = false;
+                        break;
+                    }
+                }
+
+                if ($continue)
+                    continue;
+            }
+            $formatOption = ['aClass' => $option->aClass, 'icon' => $option->icon, 'name' => $option->title, 'type' => $option->type, 'roles' => $option->roles];
             if ($option->type == 'modal') {
                 $class = $formatOption['aClass'] . ' ajaxFormLaunch';
                 $formatOption['aClass'] = trim($class);
