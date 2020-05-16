@@ -360,7 +360,7 @@ class KRepository extends EntityRepository
     {
     }
 
-    private function filterQuery(QueryBuilder &$q)
+    protected function filterQuery(QueryBuilder &$q)
     {
         if (!empty($_GET) && count($_GET) > 0) {
             $fields = $this->getClassMetaFields();
@@ -409,7 +409,7 @@ class KRepository extends EntityRepository
         }
     }
 
-    private function queryActionDictionary($sign)
+    protected function queryActionDictionary($sign)
     {
         $dictionary = ['gt' => '>', 'gte' => '>=', 'lt' => '<', 'lte' => '<=', 'in' => 'IN', 'notin' => 'NOT IN'];
         if (array_key_exists($sign, $dictionary))
