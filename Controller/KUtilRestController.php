@@ -133,8 +133,8 @@ class KUtilRestController extends UtilController
         try {
             if (method_exists($object, 'setHits')) {
                 $object->setHits(($object->getHits() + 1));
-                $this->em()->persist($object);
-                $this->em()->flush();
+                $this->_em()->persist($object);
+                $this->_em()->flush();
             }
 
             $this->responseOkDetail($params, $status);
