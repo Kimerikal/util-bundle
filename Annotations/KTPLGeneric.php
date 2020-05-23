@@ -24,4 +24,12 @@ final class KTPLGeneric implements Annotation
     public $rowMainRouteMehod = '';
     public $rowMainRouteAuto;
     public $newElementButton = true;
+    public $searchRoute = '';
+    public $multiOnChangeRoute = '';
+    public $autoCompleteSearchRoute = '';
+    public $bulkActionsTemplate = '';
+    /*
+     * Example: {"AppBundle:Template:my-template.html.twig": "object", "AppBundle:Template:my-template-2.html.twig": ""}
+     */
+    public $listFiltersTemplate = [];
 }

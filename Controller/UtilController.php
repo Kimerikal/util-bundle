@@ -47,17 +47,15 @@ class UtilController extends Controller
         );
 
         $rowData = $this->annotationListData($entityInfo->getName());
-        //$categories = $this->doctrineRepo('EstablishmentBundle:EstablishmentCategory')->findAll();
         //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
         $list = $this->_repo($classData)->loadAll($offset, $limit);
         //$orderHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-order.html.twig');
-        //$filterHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-filters.html.twig', array('categories' => $categories));
         $orderHtml = '';
-        $filterHtml = '';
-        //$actions = $this->renderView('EstablishmentBundle:Tiles:simple-list-batch-actions.html.twig');
-        //$search = 'k_establishment_admin_search'
+        $filterHtml = $options->listFiltersTemplate;
         $actions = '';
-        $search = '';
+        if (!empty($options->bulkActionsTemplate))
+            $actions = $this->renderView($options->bulkActionsTemplate);
+        $search = $options->searchRoute;
         //$js = 'bundles/kblog/js/list.js';
         $js = null;
         $newElement = $options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null;
@@ -73,9 +71,9 @@ class UtilController extends Controller
     {
         $object = null;
         $classData = $this->getEntityUrlMap($entity);
-        $entityInfo = $this->doctrine()->getClassMetadata($classData);
+        $entityInfo = $this->_em()->getClassMetadata($classData);
         if (!empty($id))
-            $object = $this->doctrineRepo($classData)->find($id);
+            $object = $this->_repo($classData)->find($id);
         else {
             $objType = $entityInfo->getName();
             $object = new $objType;
@@ -111,7 +109,7 @@ class UtilController extends Controller
     {
         $resp = array('done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.');
         $classData = $this->getEntityUrlMap($entity);
-        $entityInfo = $this->doctrine()->getClassMetadata($classData);
+        $entityInfo = $this->_em()->getClassMetadata($classData);
         $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
         $repo = $this->_repo($classData);
         $object = $repo->find($id);
@@ -144,6 +142,13 @@ class UtilController extends Controller
             $options->rowMainRouteName = 'k_util_kadmin_autogen_' . $auto[0];
             $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
         }
+
+        if (!empty($options->listFiltersTemplate)) {
+            foreach ($options->listFiltersTemplate as $key => $object) {
+                $options->listFiltersTemplate = $this->renderView($key);
+            }
+        } else
+            $options->listFiltersTemplate = '';
 
         return $options;
     }
