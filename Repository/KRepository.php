@@ -159,14 +159,12 @@ class KRepository extends EntityRepository
     {
         $list = null;
         $q = $this->createQueryBuilder('c')
-            ->select('c')
-            ->where('c.enabled = 1');
+            ->select('c');
 
         if (!empty($filterBy)) {
             for ($i = 0; $i < count($filterBy); $i++) {
                 $q->addSelect('fil_' . $i)
-                    ->innerJoin('c.' . $filterBy[$i]->name, 'fil_' . $i)
-                    ->andWhere('fil_' . $i . '.id IN (' . implode(',', $filterBy[$i]->values) . ')');
+                    ->innerJoin('c.' . $filterBy[$i]->name, 'fil_' . $i, 'WITH', 'fil_' . $i . '.id IN (' . implode(',', $filterBy[$i]->values) . ')');
             }
         }
 
@@ -234,7 +232,7 @@ class KRepository extends EntityRepository
             $query = $q->getQuery();
             $list = $query->getResult();
         } catch (\Exception $ex) {
-            error_log($ex->getMessage());
+            ExceptionUtil::logException($ex, 'KRepository::search');
         }
 
         return $list;

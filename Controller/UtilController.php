@@ -24,8 +24,60 @@ class UtilController extends Controller
     const ADMIN_ENV = 2;
 
     /**
-     * @Route("/kadmin/autogen/list/{entity}/{page}", name="k_util_kadmin_autogen_list", methods={"GET"}, defaults={"page": 1})
+     * @Route("/kadmin/autogen/ajax-search/{entity}/{page}", name="k_util_kadmin_autogen_search", methods={"GET","POST"}, defaults={"page": 1})
      * @return Response
+     */
+    public function searchAuto(Request $r, $entity, $page = 1)
+    {
+        $resp = ['done' => true, 'msg' => 'operaciones realizadas con éxito.', 'html' => ''];
+        $orderBy = $r->request->get('orderBy', null);
+        if ($orderBy == "undefined")
+            $orderBy = ['c.id' => 'DESC'];
+
+        $filterBy = $r->request->get('filterBy', null);
+        if (!empty($filterBy))
+            $filterBy = json_decode($filterBy);
+
+        $page = $r->request->get('page', 1);
+        $searchBy = null;
+        if (!is_array($orderBy)) {
+            $tmp = \explode('|', $orderBy);
+            if (count($tmp) == 2) {
+                $orderBy = [$tmp[0] => $tmp[1]];
+            }
+            unset($tmp);
+        }
+
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->_em()->getClassMetadata($classData);
+        $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
+
+        $result = $this->_repo($classData)->search(null, $filterBy, $searchBy, $orderBy, $page);
+        $params = array();
+        $params['limit'] = 50;
+        $params['total'] = 0;
+        $params['list'] = $result;
+
+        $resp['html'] = $this->renderView('AdminBundle:Common:list-dyn-columns.html.twig', [
+            'list' => $params['list'], 'title' => '__toString', 'multiCheck' => true,
+            'mainRoute' => $options->rowMainRouteName, 'mainRouteMethod' => $options->rowMainRouteMehod, 'mainRouteKey' => $options->rowMainRouteKey,
+            'image' => $options->imageMethod, 'options' => $options->rowOptions, 'notFound' => 'No se encontraron ' . $options->plural,
+            'data' => $this->annotationListData($entityInfo->getName())
+        ]);
+
+        $resp['mcount'] = count($result);
+
+        return new JsonResponse($resp);
+    }
+
+
+    /**
+     * @Route("/kadmin/autogen/list/{entity}/{page}", name="k_util_kadmin_autogen_list", methods={"GET"}, defaults={"page": 1})
+     * @param Request $r
+     * @param $entity
+     * @param int $page
+     * @return Response
+     * @throws \Exception
      */
     public function listAuto(Request $r, $entity, $page = 1)
     {
@@ -41,26 +93,18 @@ class UtilController extends Controller
 
         $limit = 50;
         $offset = $limit * ($page - 1);
-
-        $breadcrumbs = array(
-            array('name' => 'Lista de ' . $options->plural),
-        );
-
-        $rowData = $this->annotationListData($entityInfo->getName());
-        //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
         $list = $this->_repo($classData)->loadAll($offset, $limit);
-        //$orderHtml = $this->renderView('EstablishmentBundle:Tiles:simple-list-order.html.twig');
-        $orderHtml = '';
-        $filterHtml = $options->listFiltersTemplate;
+        $breadcrumbs = [['name' => 'Lista de ' . $options->plural]];
         $actions = '';
         if (!empty($options->bulkActionsTemplate))
             $actions = $this->renderView($options->bulkActionsTemplate);
-        $search = $options->searchRoute;
+
+        // TODO: CUSTOM CSS, CUSTOM JS y MODALS
+        //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
         //$js = 'bundles/kblog/js/list.js';
         $js = null;
-        $newElement = $options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null;
 
-        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $rowData, $this->setPagination($r, $list->count(), $page, 50, ''), $filterHtml, $newElement, null, $actions, $js, '', '', '', $search, $orderHtml, null, $options->rowMainRouteParams);
+        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $this->setPagination($r, $list->count(), $page, 50, ''), $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $options->searchRoute, '', null, $options->rowMainRouteParams);
     }
 
     /**
@@ -142,7 +186,6 @@ class UtilController extends Controller
             $options->rowMainRouteName = 'k_util_kadmin_autogen_' . $auto[0];
             $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
         }
-
         if (!empty($options->listFiltersTemplate)) {
             foreach ($options->listFiltersTemplate as $key => $object) {
                 $options->listFiltersTemplate = $this->renderView($key);
