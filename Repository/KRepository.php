@@ -221,7 +221,11 @@ class KRepository extends EntityRepository
             foreach ($orderBy as $key => $order) {
                 $q->addOrderBy($key, $order);
             }
+        } else {
+            $this->loadAllOrderBy();
         }
+
+        $this->filterQuery($q, 'c');
 
         //->setParameter('orig', '%' . $pattern_orig . '%');
         /* $q->setMaxResults($limit)
@@ -358,7 +362,7 @@ class KRepository extends EntityRepository
     {
     }
 
-    protected function filterQuery(QueryBuilder &$q)
+    protected function filterQuery(QueryBuilder &$q, $letter = 'a')
     {
         if (!empty($_GET) && count($_GET) > 0) {
             $fields = $this->getClassMetaFields();
@@ -370,14 +374,14 @@ class KRepository extends EntityRepository
                     if (stripos($getKey, $fieldKey) !== 0)
                         continue;
 
-                    $prefix = 'a.';
+                    $prefix = $letter . '.';
                     $field = $data['fieldName'];
                     $tmp = explode('__', $getKey);
                     if (strpos($tmp[0], ':') !== false) {
                         $joinTmp = explode(':', $tmp[0]);
                         if (!array_key_exists($joinTmp[0], $joins)) {
-                            $joins[$joinTmp[0]] = 'a' . $count . '.';
-                            $q->innerJoin('a.' . $joinTmp[0], 'a' . $count);
+                            $joins[$joinTmp[0]] = $letter . $count . '.';
+                            $q->innerJoin($prefix . $joinTmp[0], $letter . $count);
                         }
 
                         $prefix = $joins[$joinTmp[0]];

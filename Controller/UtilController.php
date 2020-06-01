@@ -30,16 +30,22 @@ class UtilController extends Controller
     public function searchAuto(Request $r, $entity, $page = 1)
     {
         $resp = ['done' => true, 'msg' => 'operaciones realizadas con éxito.', 'html' => ''];
+        $pattern = $r->request->get('searchStr', '');
+        if ($pattern === "undefined")
+            $pattern = '';
+        $searchByPost = $r->request->get('searchBy', '');
         $orderBy = $r->request->get('orderBy', null);
         if ($orderBy == "undefined")
             $orderBy = ['c.id' => 'DESC'];
 
         $filterBy = $r->request->get('filterBy', null);
-        if (!empty($filterBy))
+        if (!empty($filterBy) && !is_array($filterBy))
             $filterBy = json_decode($filterBy);
 
         $page = $r->request->get('page', 1);
         $searchBy = null;
+        if (!empty($searchByPost))
+            $searchBy = \explode(',', $searchByPost);
         if (!is_array($orderBy)) {
             $tmp = \explode('|', $orderBy);
             if (count($tmp) == 2) {
@@ -52,7 +58,7 @@ class UtilController extends Controller
         $entityInfo = $this->_em()->getClassMetadata($classData);
         $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
 
-        $result = $this->_repo($classData)->search(null, $filterBy, $searchBy, $orderBy, $page);
+        $result = $this->_repo($classData)->search($pattern, $filterBy, $searchBy, $orderBy, $page);
         $params = array();
         $params['limit'] = 50;
         $params['total'] = 0;
@@ -540,6 +546,8 @@ class UtilController extends Controller
         $form->handleRequest($r);
         if ($save && $form->isSubmitted() && $form->isValid()) {
             $obj = $form->getData();
+            if (method_exists($obj, 'setUpdatedAt'))
+                $obj->setUpdatedAt(new \DateTime());
             $this->callBackExec($form, $callbackBefore);
             $this->persist($obj);
             $this->callBackExec($form, $callbackAfter);

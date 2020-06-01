@@ -10,9 +10,9 @@ use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Kimerikal\UtilBundle\Annotations as KMK;
+use Doctrine\ORM\Mapping as ORM;
 
 Trait KEntityImage
 {
@@ -109,8 +109,7 @@ Trait KEntityImage
 
     /**
      * @ORM\PostPersist
-     * @ORM\PostUpdate
-     * @return bool|null
+     * @ORM\PreUpdate
      */
     public function upload(LifecycleEventArgs $event)
     {
