@@ -184,10 +184,6 @@ class SimpleForm extends AbstractType
                         $bParams['target_object'] = $fd->targetObject;
                         $bParams['class'] = $fd->targetObject;
                         $bParams['choice_label'] = 'id';
-                        if (isset($attrs['multiple']) && $attrs['multiple'])
-                            $bParams['multiple'] = true;
-                        if (isset($attrs['expanded']) && $attrs['expanded'])
-                            $bParams['expanded'] = true;
                     } else if ($fd->type == 'json_array') {
                         if (isset($fd->format))
                             $bParams['format'] = $fd->format;
@@ -226,11 +222,31 @@ class SimpleForm extends AbstractType
                     if ($fd->type == 'entity' && !empty($fd->class) && !empty($fd->choiceLabel)) {
                         $bParams['class'] = $fd->class;
                         $bParams['choice_label'] = $fd->choiceLabel;
+                    }
 
-                        if (isset($attrs['multiple']) && $attrs['multiple'])
-                            $bParams['multiple'] = true;
-                        if (isset($attrs['expanded']) && $attrs['expanded'])
-                            $bParams['expanded'] = true;
+                    if (isset($attrs['multiple'])) {
+                        $bParams['multiple'] = $attrs['multiple'];
+                        unset($attrs['multiple']);
+                    }
+
+                    if (isset($attrs['expanded'])) {
+                        $bParams['expanded'] = $attrs['expanded'];
+                        unset($attrs['expanded']);
+                    }
+
+                    if (isset($attrs['by_reference'])) {
+                        $bParams['by_reference'] = $attrs['by_reference'];
+                        unset($attrs['by_reference']);
+                    }
+
+                    if (isset($attrs['allow_add'])) {
+                        $bParams['allow_add'] = $attrs['allow_add'];
+                        unset($attrs['allow_add']);
+                    }
+
+                    if (isset($attrs['allow_delete'])) {
+                        $bParams['allow_delete'] = $attrs['allow_delete'];
+                        unset($attrs['allow_delete']);
                     }
 
                     if ($fd->type == 'date') {

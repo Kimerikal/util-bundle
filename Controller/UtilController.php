@@ -149,15 +149,15 @@ class UtilController extends Controller
     }
 
     /**
-     * @Route("/kadmin/autogen/remove/{entity}/{id}", name="k_util_kadmin_autogen_remove", methods={"POST","GET"})
+     * @Route("/kadmin/autogen/remove/{entity}/{id}/{ajax}", name="k_util_kadmin_autogen_remove", methods={"POST","GET"}, defaults={"ajax"=1})
      * @param $entity
      * @param $id
      * @return Response
      * @throws \Exception
      */
-    public function delete($entity, $id)
+    public function delete(Request $r, $entity, $id, $ajax = 1)
     {
-        $resp = array('done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.');
+        $resp = ['done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.'];
         $classData = $this->getEntityUrlMap($entity);
         $entityInfo = $this->_em()->getClassMetadata($classData);
         $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
@@ -173,7 +173,10 @@ class UtilController extends Controller
             }
         }
 
-        return new JsonResponse($resp);
+        if ($ajax == 1)
+            return new JsonResponse($resp);
+
+        return $this->redirect($r->headers->get('referer'));
     }
 
     public function getGenericAnnotations($entityClass, $entityName)
