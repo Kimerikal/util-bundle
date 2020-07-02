@@ -48,6 +48,19 @@ class KGoogleMaps
         return null;
     }
 
+    public function distanceMatrix(string $origin, string $destination, $countryCode = 'ES')
+    {
+        $url = 'https://maps.googleapis.com/maps/api/distancematrix/json?key=' . $this->apiKey . '&components=country:' . $countryCode;
+
+        $tail = '&origins=' . \urlencode($origin);
+        $tail .= '&destinations=' . \urlencode($destination);
+        $data = \json_decode(\file_get_contents($url . $tail));
+        if ($data->status == 'OK')
+            return $data->rows[0]->elements[0]->distance->value;
+
+        return null;
+    }
+
     public function getDataFromAddress(string $address, $countryCode = 'ES')
     {
         $url = 'https://maps.googleapis.com/maps/api/geocode/json?key=' . $this->apiKey . '&components=country:' . $countryCode;
