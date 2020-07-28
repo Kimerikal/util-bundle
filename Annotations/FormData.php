@@ -34,4 +34,8 @@ final class FormData extends Annotation {
     public $format = null;
     public $inputType = null;
     public $groups = array();
+    /**
+     * @Enum({"no","newline","line"})
+     */
+    public $separator = 'no';
 }

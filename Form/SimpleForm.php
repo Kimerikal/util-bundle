@@ -133,7 +133,8 @@ class SimpleForm extends AbstractType
                         'class' => 'form-control' . ($fd->type == 'checkbox' ? ' make-switch' : ''),
                         'placeholder' => $fd->placeholder,
                         'nlal' => $fd->newLine,
-                        'bcol' => $fd->col
+                        'bcol' => $fd->col,
+                        'separator' => $fd->separator
                     );
 
                     $bParams = array('required' => $fd->required, 'mapped' => $fd->mapped);
