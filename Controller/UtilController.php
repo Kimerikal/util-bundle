@@ -215,7 +215,7 @@ class UtilController extends Controller
             $reflectionProperty = new \ReflectionProperty($entityName, $p->name);
             $data = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\KListRowData');
             if ($data)
-                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type];
+                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix];
         }
 
         $this->sortByOrder($rowData);
