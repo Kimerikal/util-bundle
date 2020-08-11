@@ -37,3 +37,7 @@ services:
     k_service.google_maps:
         class: Kimerikal\UtilBundle\Service\KGoogleMaps
         arguments: ['%app.google_api_key%']
+
+    k_service.firebase_notifications:
+        class: Kimerikal\UtilBundle\Service\KFireBaseNotifications
+        arguments: ['%app.firebase_messages_server_key%']
