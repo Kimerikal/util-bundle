@@ -40,4 +40,9 @@ services:
 
     k_service.firebase_notifications:
         class: Kimerikal\UtilBundle\Service\KFireBaseNotifications
-        arguments: ['%app.firebase_messages_server_key%']
+        arguments: ['%app.firebase_messages_server_key%', "@doctrine.orm.entity_manager"]
+
+    k_service.email_notifications:
+        class: Kimerikal\UtilBundle\Service\KEmailNotifications
+        arguments: ["@twig", "@mailer", "%app.title%", "%mailer_user%"]
+
