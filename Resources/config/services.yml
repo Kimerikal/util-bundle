@@ -46,3 +46,8 @@ services:
         class: Kimerikal\UtilBundle\Service\KEmailNotifications
         arguments: ["@twig", "@mailer", "%app.title%", "%mailer_user%"]
 
+    k_service.form.type.color:
+        class: Kimerikal\UtilBundle\Form\Type\ColorType
+        tags:
+            - {name: form.type, alias: color}
+
