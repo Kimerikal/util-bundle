@@ -215,7 +215,32 @@ class UtilController extends Controller
             $reflectionProperty = new \ReflectionProperty($entityName, $p->name);
             $data = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\KListRowData');
             if ($data)
-                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix];
+                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
+        }
+
+        $methods = $reflectionClass->getMethods();
+        foreach ($methods as $method) {
+            $reflectionMethod = new \ReflectionMethod($entityName, $method->name);
+            $data = $reader->getMethodAnnotation($reflectionMethod, 'Kimerikal\\UtilBundle\\Annotations\\KListRowData');
+            if ($data) {
+                $row = ['method' => $method->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
+                if (isset($data->functionParams) && count($data->functionParams) > 0) {
+                    $values = [];
+                    foreach ($data->functionParams as $param) {
+                        switch ($param) {
+                            case 'currentUser':
+                                $values[] = !empty($this->getUser()) ? $this->getUser()->getId() : 0;
+                                break;
+                            default:
+                                $values[] = $param;
+                                break;
+                        }
+                        $row['functionParams'] = $values;
+                    }
+                }
+
+                $rowData[] = $row;
+            }
         }
 
         $this->sortByOrder($rowData);
