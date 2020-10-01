@@ -184,6 +184,9 @@ class UtilController extends Controller
         $reader = new AnnotationReader();
         $reflClass = new \ReflectionClass($entityClass);
         $options = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
+        if (!$options)
+            return null;
+
         if (empty($options->name))
             $options->name = $entityName;
         if (empty($options->plural))
