@@ -11,7 +11,7 @@ use Doctrine\Common\Annotations\Annotation;
 final class FormData extends Annotation {
 
     /**
-     * @Enum({"text", "color", "number", "decimal", "email", "textarea", "ckeditor", "checkbox", "entity", "customForm", "simpleForm", "date", "imagecrop", "ajax_select", "entity_ajax_select", "choice", "enum", "file", "hidden"})
+     * @Enum({"text", "color", "number", "decimal", "email", "textarea", "ckeditor", "checkbox", "entity", "customForm", "simpleForm", "date", "imagecrop", "ajax_select", "entity_ajax_select", "choice", "enum", "file", "hidden", "quill"})
      */
     public $type;
     public $label;

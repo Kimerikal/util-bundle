@@ -51,3 +51,8 @@ services:
         tags:
             - {name: form.type, alias: color}
 
+    k_service.form.type.quill:
+        class: Kimerikal\UtilBundle\Form\Type\QuillType
+        tags:
+            - { name: form.type, alias: quill }
+
