@@ -25,6 +25,8 @@ Trait KJsonSerialize
                 $val = $this->$formatMethod();
             elseif ($val instanceof PersistentCollection)
                 $val = $val->toArray();
+            else if (is_resource($val))
+                $val = stream_get_contents($val);
 
             $data[$prop->getName()] = $val;
         }
