@@ -2,6 +2,7 @@
 
 namespace Kimerikal\UtilBundle\Form;
 
+use Kimerikal\UtilBundle\Annotations\FormData;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
@@ -100,7 +101,7 @@ class SimpleForm extends AbstractType
         $props = $reflectionClass->getProperties(\ReflectionProperty::IS_STATIC | \ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED | \ReflectionProperty::IS_PRIVATE);
         $elements = [];
         foreach ($props as $p) {
-            $fd = $reader->getPropertyAnnotation($p, 'Kimerikal\\UtilBundle\\Annotations\\FormData');
+            $fd = $reader->getPropertyAnnotation($p, FormData::class);
             if ($fd) {
                 if (!empty($this->group) && isset($fd->groups) && count($fd->groups) > 0 && !in_array($this->group, $fd->groups) && !array_key_exists($this->group, $fd->groups))
                     continue;

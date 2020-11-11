@@ -5,6 +5,8 @@ namespace Kimerikal\UtilBundle\Controller;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Inflector\Inflector;
 use Kimerikal\EstablishmentBundle\Entity\Establishment;
+use Kimerikal\UtilBundle\Annotations\KListRowData;
+use Kimerikal\UtilBundle\Annotations\KTPLGeneric;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 use Kimerikal\UtilBundle\Form\SimpleForm;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -149,6 +151,40 @@ class UtilController extends Controller
     }
 
     /**
+     * @Route("/kadmin/autogen/remove-multi/{entity}", name="k_util_kadmin_autogen_remove_multi", methods={"POST","GET"}, defaults={"ajax"=1})
+     * @param $entity
+     * @param $id
+     * @return Response
+     * @throws \Exception
+     */
+    public function deleteMulti(Request $r, $entity)
+    {
+        $resp = ['done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.'];
+        $elements = $r->request->get('selelements');
+        if (empty($elements))
+            return new JsonResponse($resp);
+
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->_em()->getClassMetadata($classData);
+        $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
+        $repo = $this->_repo($classData);
+        foreach ($elements as $id) {
+            $object = $repo->find($id);
+            if ($object) {
+                try {
+                    $repo->delete($object);
+                    $resp['done'] = true;
+                    $resp['msg'] = $options->name . ' eliminado con éxito';
+                } catch (\Exception $ex) {
+                    ExceptionUtil::logException($ex, 'UtilController::delete');
+                }
+            }
+        }
+
+        return $this->redirect($r->headers->get('referer'));
+    }
+
+    /**
      * @Route("/kadmin/autogen/remove/{entity}/{id}/{ajax}", name="k_util_kadmin_autogen_remove", methods={"POST","GET"}, defaults={"ajax"=1})
      * @param $entity
      * @param $id
@@ -183,7 +219,7 @@ class UtilController extends Controller
     {
         $reader = new AnnotationReader();
         $reflClass = new \ReflectionClass($entityClass);
-        $options = $reader->getClassAnnotation($reflClass, 'Kimerikal\\UtilBundle\\Annotations\\KTPLGeneric');
+        $options = $reader->getClassAnnotation($reflClass, KTPLGeneric::class);
         if (!$options)
             return null;
 
@@ -199,9 +235,21 @@ class UtilController extends Controller
             $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
         }
         if (!empty($options->listFiltersTemplate)) {
-            foreach ($options->listFiltersTemplate as $key => $object) {
-                $options->listFiltersTemplate = $this->renderView($key);
+            $filterParams = [];
+            if (!empty($options->listFiltersParams)) {
+                foreach ($options->listFiltersParams as $key => $val) {
+                    if (strpos($val, '|') !== false) {
+                        $tmp = explode('|', $val);
+                        $repo = $this->_repo($tmp[0]);
+                        $method = $tmp[1];
+                        if ($repo && method_exists($repo, $method))
+                            $val = $repo->$method();
+                        unset($tmp);
+                    }
+                    $filterParams[$key] = $val;
+                }
             }
+            $options->listFiltersTemplate = $this->renderView($options->listFiltersTemplate, $filterParams);
         } else
             $options->listFiltersTemplate = '';
 
@@ -216,7 +264,7 @@ class UtilController extends Controller
         $rowData = [];
         foreach ($props as $p) {
             $reflectionProperty = new \ReflectionProperty($entityName, $p->name);
-            $data = $reader->getPropertyAnnotation($reflectionProperty, 'Kimerikal\\UtilBundle\\Annotations\\KListRowData');
+            $data = $reader->getPropertyAnnotation($reflectionProperty, KListRowData::class);
             if ($data)
                 $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
         }
@@ -224,7 +272,7 @@ class UtilController extends Controller
         $methods = $reflectionClass->getMethods();
         foreach ($methods as $method) {
             $reflectionMethod = new \ReflectionMethod($entityName, $method->name);
-            $data = $reader->getMethodAnnotation($reflectionMethod, 'Kimerikal\\UtilBundle\\Annotations\\KListRowData');
+            $data = $reader->getMethodAnnotation($reflectionMethod, KListRowData::class);
             if ($data) {
                 $row = ['method' => $method->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
                 if (isset($data->functionParams) && count($data->functionParams) > 0) {
