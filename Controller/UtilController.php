@@ -371,10 +371,14 @@ class UtilController extends Controller
             if ($lastResult > $totalCount)
                 $lastResult = $totalCount;
 
+            $base = str_replace($extraPageUrl . $currentPage, '', $r->getUri());
+            if (!StrUtil::endsWith($base, '/'))
+                $base .= '/';
+
             return array(
                 'curPage' => $currentPage,
                 'totalPages' => ceil($totalCount / $pageLimit),
-                'baseUrl' => str_replace($extraPageUrl . $currentPage, '', $r->getUri()),
+                'baseUrl' => $base,
                 'extraPageUrl' => $extraPageUrl,
                 'sentence' => 'Mostrando del ' . $firstResult . ' al ' . $lastResult . ' de ' . $totalCount
             );
