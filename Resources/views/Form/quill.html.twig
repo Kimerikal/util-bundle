@@ -1,6 +1,8 @@
 {% block quill_widget %}
     {% spaceless %}
-        <div class="quill-editor" id="quill_{{ id }}">{{ value | raw }}</div>
-        <textarea {{ block('widget_attributes') }} style="display: none;"></textarea>
+        <div class="input-quill-editor-wrapper">
+            <div class="quill-editor" id="quill_{{ id }}">{{ value | raw }}</div>
+            <textarea {{ block('widget_attributes') }} style="display: none;">{{ value | raw }}</textarea>
+        </div>
     {% endspaceless %}
 {% endblock %}
