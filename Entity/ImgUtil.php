@@ -313,4 +313,50 @@ class ImgUtil
         return (\bin2hex($pict[0]) == '89' && $pict[1] == 'P' && $pict[2] == 'N' && $pict[3] == 'G');
     }
 
+    public static function fileInfo($file)
+    {
+        $info = pathinfo($file);
+        if (empty($info))
+            return null;
+
+        $info['icon'] = 'fa fa-file-pdf-o';
+        switch ($info['extension']) {
+            case 'doc':
+            case 'docx':
+                $info['icon'] = 'fa fa-file-word-o';
+                break;
+            case 'png':
+            case 'jpeg':
+            case 'jpg':
+                $info['icon'] = 'fa fa-file-photo-o';
+                break;
+            case 'mp4':
+            case 'avi':
+                $info['icon'] = 'fa fa-file-image-o';
+                break;
+            case 'mp3':
+                $info['icon'] = 'fa fa-file-audio-o';
+                break;
+            case 'xls':
+            case 'xlsx':
+            case 'csv':
+                $info['icon'] = 'fa fa-file-excel-o';
+                break;
+            case 'ppt':
+            case 'pptx':
+                $info['icon'] = 'fa fa-file-powerpoint-o';
+                break;
+        }
+
+        $info['size'] = self::humanFilesize(filesize($file));
+
+        return $info;
+    }
+
+    public static function humanFilesize($bytes, $decimals = 2)
+    {
+        $sz = 'BKMGTP';
+        $factor = floor((strlen($bytes) - 1) / 3);
+        return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor] . ($factor > 0 ? 'b' : '');
+    }
 }
