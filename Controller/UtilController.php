@@ -4,6 +4,7 @@ namespace Kimerikal\UtilBundle\Controller;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Inflector\Inflector;
+use Doctrine\ORM\EntityManager;
 use Kimerikal\EstablishmentBundle\Entity\Establishment;
 use Kimerikal\UtilBundle\Annotations\KListRowData;
 use Kimerikal\UtilBundle\Annotations\KTPLGeneric;
@@ -451,7 +452,7 @@ class UtilController extends Controller
     }
 
     /**
-     * @return \Doctrine\Persistence\ObjectManager
+     * @return EntityManager
      */
     protected function _em()
     {

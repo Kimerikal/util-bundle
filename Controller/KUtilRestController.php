@@ -118,7 +118,8 @@ class KUtilRestController extends UtilController
         $params = $this->getDefaultResponse();
         try {
             $list = $this->_repo($className)->loadAll($offset, $limit, true);
-            $this->responseOkList($params, $status, $list->count(), $limit, $offset, $list);
+            $count = $list instanceof Paginator ? $list->count() : count($list);
+            $this->responseOkList($params, $status, $count, $limit, $offset, $list);
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);
         }
@@ -144,5 +145,13 @@ class KUtilRestController extends UtilController
         }
 
         return new JsonResponse($params, $status);
+    }
+
+    protected function getUserFromToken() {
+        $token = $this->get('security.token_storage')->getToken();
+        if (empty($token))
+            return null;
+
+        return $token->getUser();
     }
 }
