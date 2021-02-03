@@ -425,4 +425,8 @@ class KRepository extends EntityRepository
         $meta = $this->getClassMetadata();
         return array_merge($meta->fieldMappings, $meta->associationMappings);
     }
+
+    protected function connection() {
+        return $this->getEntityManager()->getConnection();
+    }
 }
