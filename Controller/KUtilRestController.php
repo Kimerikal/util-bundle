@@ -101,6 +101,9 @@ class KUtilRestController extends UtilController
         if (stripos($msg, 'SQLSTATE[23000]:')) {
             $tmp = explode('SQLSTATE[23000]:', $msg);
             return trim($tmp[1]);
+        } else if (stripos($msg, 'SQLSTATE[HY000]:')) {
+            $tmp = explode('SQLSTATE[HY000]:', $msg);
+            return trim($tmp[1]);
         }
 
         return $msg;
