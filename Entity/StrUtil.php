@@ -4,6 +4,11 @@ namespace Kimerikal\UtilBundle\Entity;
 
 class StrUtil {
 
+    public static function extractAcronym($str) {
+        preg_match_all('/(?<=\s|^)[a-z]/i', str_replace('-', ' ', self::slug($str)), $matches);
+        return mb_strtoupper(implode('', $matches[0]));
+    }
+
     /**
      * Exchanges numeric value for a letter, Example: 1 is A, 2 is B...
      *
