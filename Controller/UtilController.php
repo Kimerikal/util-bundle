@@ -461,7 +461,7 @@ class UtilController extends Controller
 
     /**
      * @param $repo - Ex: AcmeBundle:EntityAcme
-     * @return \Doctrine\Persistence\ObjectRepository
+     * @return \Doctrine\ORM\EntityRepository
      */
     protected function _repo($repo)
     {
