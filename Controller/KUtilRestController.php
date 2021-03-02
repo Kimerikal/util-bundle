@@ -3,6 +3,7 @@
 namespace Kimerikal\UtilBundle\Controller;
 
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Kimerikal\UtilBundle\Repository\KPaginator;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -72,6 +73,10 @@ class KUtilRestController extends UtilController
             $tmp = $list->getIterator()->getArrayCopy();
             $list = $tmp;
             unset($tmp);
+        } else if ($list instanceof KPaginator) {
+            $tmp = $list->getResult();
+            $list = $tmp;
+            unset($tmp);
         }
         $params['done'] = true;
         $params['data'] = ['list' => $list, 'meta' => ['total' => (int)$total, 'limit' => (int)$limit, 'offset' => (int)$offset, 'remaining' => max(0, ($total - $offset - $limit))]];
@@ -121,7 +126,7 @@ class KUtilRestController extends UtilController
         $params = $this->getDefaultResponse();
         try {
             $list = $this->_repo($className)->loadAll($offset, $limit, true);
-            $count = $list instanceof Paginator ? $list->count() : count($list);
+            $count = ($list instanceof Paginator || $list instanceof KPaginator) ? $list->count() : count($list);
             $this->responseOkList($params, $status, $count, $limit, $offset, $list);
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);
