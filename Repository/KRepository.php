@@ -122,14 +122,15 @@ class KRepository extends EntityRepository
                 ->setParameter('enabled', true);
         }
 
-        if (!empty($this->loadAllOrderBy())) {
-            foreach ($this->loadAllOrderBy() as $key => $val) {
+        $this->filterQuery($q, $_REQUEST);
+        $this->filter_load_all_query($q, $offset, $limit);
+
+        $orderBy = $this->findOrderBy($this->loadAllOrderBy(), $_REQUEST);
+        if (!empty($orderBy)) {
+            foreach ($orderBy as $key => $val) {
                 $q->addOrderBy('a.' . $key, $val);
             }
         }
-
-        $this->filterQuery($q);
-        $this->filter_load_all_query($q, $offset, $limit);
 
         try {
             return new Paginator($q->getQuery());
@@ -225,7 +226,7 @@ class KRepository extends EntityRepository
             $this->loadAllOrderBy();
         }
 
-        $this->filterQuery($q, 'c');
+        $this->filterQuery($q, $_REQUEST, 'c');
 
         //->setParameter('orig', '%' . $pattern_orig . '%');
         /* $q->setMaxResults($limit)
@@ -362,51 +363,72 @@ class KRepository extends EntityRepository
     {
     }
 
-    protected function filterQuery(QueryBuilder &$q, $letter = 'a')
+    protected function findOrderBy(array $default = null, array $params = null)
     {
-        if (!empty($_GET) && count($_GET) > 0) {
-            $fields = $this->getClassMetaFields();
-            $count = 1;
-            $joins = [];
-            foreach ($_GET as $getKey => $param) {
-                foreach ($fields as $key => $data) {
-                    $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
-                    if (stripos($getKey, $fieldKey) !== 0)
-                        continue;
+        if (empty($params))
+            return $default;
 
-                    $prefix = $letter . '.';
-                    $field = $data['fieldName'];
-                    $tmp = explode('__', $getKey);
-                    if (strpos($tmp[0], ':') !== false) {
-                        $joinTmp = explode(':', $tmp[0]);
-                        if (!array_key_exists($joinTmp[0], $joins)) {
-                            $joins[$joinTmp[0]] = $letter . $count . '.';
-                            $q->innerJoin($prefix . $joinTmp[0], $letter . $count);
-                        }
+        $orderBy = [];
+        foreach ($params as $key => $val) {
+            if (stripos($key, 'orderby_') !== 0)
+                continue;
 
-                        $prefix = $joins[$joinTmp[0]];
-                        $field = $joinTmp[1];
+            $tmp = explode('orderby_', $key);
+            $orderBy[$val] = strtoupper($tmp[1]);
+        }
+
+        if (count($orderBy) > 0)
+            return $orderBy;
+
+        return $default;
+    }
+
+    protected function filterQuery(QueryBuilder &$q, array $params = [], $letter = 'a')
+    {
+        if (empty($params) || count($params) === 0)
+            return;
+
+        $fields = $this->getClassMetaFields();
+        $count = 1;
+        $joins = [];
+        foreach ($params as $getKey => $param) {
+            foreach ($fields as $key => $data) {
+                $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
+                if (stripos($getKey, $fieldKey) !== 0)
+                    continue;
+
+                $prefix = $letter . '.';
+                $field = $data['fieldName'];
+                $tmp = explode('__', $getKey);
+                if (strpos($tmp[0], ':') !== false) {
+                    $joinTmp = explode(':', $tmp[0]);
+                    if (!array_key_exists($joinTmp[0], $joins)) {
+                        $joins[$joinTmp[0]] = $letter . $count . '.';
+                        $q->innerJoin($prefix . $joinTmp[0], $letter . $count);
                     }
 
-                    if (count($tmp) === 1) {
-                        $q->andWhere($prefix . $field . '= :param_' . $count)
-                            ->setParameter('param_' . $count, $param);
-                    } else if (count($tmp) === 2) {
-                        $operation = $this->queryActionDictionary($tmp[1]);
-                        if ($operation === 'NOT IN' || $operation === 'IN') {
-                            $q->andWhere($prefix . $field . ' ' . $operation . ' (:param_' . $count . ')');
-                            if (is_array($param))
-                                $q->setParameter('param_' . $count, $param, Connection::PARAM_STR_ARRAY);
-                            else
-                                $q->setParameter('param_' . $count, $param);
-                        } else {
-                            $q->andWhere($prefix . $field . ' ' . $operation . ' :param_' . $count)
-                                ->setParameter('param_' . $count, $param);
-                        }
-                    }
-
-                    $count++;
+                    $prefix = $joins[$joinTmp[0]];
+                    $field = $joinTmp[1];
                 }
+
+                if (count($tmp) === 1) {
+                    $q->andWhere($prefix . $field . '= :param_' . $count)
+                        ->setParameter('param_' . $count, $param);
+                } else if (count($tmp) === 2) {
+                    $operation = $this->queryActionDictionary($tmp[1]);
+                    if ($operation === 'NOT IN' || $operation === 'IN') {
+                        $q->andWhere($prefix . $field . ' ' . $operation . ' (:param_' . $count . ')');
+                        if (is_array($param))
+                            $q->setParameter('param_' . $count, $param, Connection::PARAM_STR_ARRAY);
+                        else
+                            $q->setParameter('param_' . $count, $param);
+                    } else {
+                        $q->andWhere($prefix . $field . ' ' . $operation . ' :param_' . $count)
+                            ->setParameter('param_' . $count, $param);
+                    }
+                }
+
+                $count++;
             }
         }
     }
@@ -426,7 +448,8 @@ class KRepository extends EntityRepository
         return array_merge($meta->fieldMappings, $meta->associationMappings);
     }
 
-    protected function connection() {
+    protected function connection()
+    {
         return $this->getEntityManager()->getConnection();
     }
 }
