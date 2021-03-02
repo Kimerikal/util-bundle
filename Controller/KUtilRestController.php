@@ -67,6 +67,16 @@ class KUtilRestController extends UtilController
         return ['done' => false, 'msg' => self::ERROR_DEFAULT_MSG];
     }
 
+    protected function responseOkListPaginator(&$params, &$status, KPaginator $paginator)
+    {
+        $params['done'] = true;
+        $params['data'] = [
+            'list' => $paginator->getList(),
+            'meta' => ['total' => $paginator->count(), 'limit' => $paginator->getLimit(), 'offset' => $paginator->getOffset(), 'remaining' => $paginator->getRemaining()]];
+        $params['msg'] = 'Ok';
+        $status = Response::HTTP_OK;
+    }
+
     protected function responseOkList(&$params, &$status, $total, $limit, $offset, $list = [])
     {
         if ($list instanceof Paginator) {
@@ -126,8 +136,12 @@ class KUtilRestController extends UtilController
         $params = $this->getDefaultResponse();
         try {
             $list = $this->_repo($className)->loadAll($offset, $limit, true);
-            $count = ($list instanceof Paginator || $list instanceof KPaginator) ? $list->count() : count($list);
-            $this->responseOkList($params, $status, $count, $limit, $offset, $list);
+            if ($list instanceof KPaginator)
+                $this->responseOkListPaginator($params, $status, $list);
+            else {
+                $count = $list instanceof Paginator ? $list->count() : count($list);
+                $this->responseOkList($params, $status, $count, $limit, $offset, $list);
+            }
         } catch (\Exception $e) {
             $this->responseException($e, $params, $status);
         }
@@ -155,7 +169,8 @@ class KUtilRestController extends UtilController
         return new JsonResponse($params, $status);
     }
 
-    protected function getUserFromToken() {
+    protected function getUserFromToken()
+    {
         $token = $this->get('security.token_storage')->getToken();
         if (empty($token))
             return null;

@@ -135,7 +135,7 @@ class KRepository extends EntityRepository
         try {
             // return $q->getQuery()->getResult();
             // return new Paginator($q->getQuery());
-            return new KPaginator($q, $this);
+            return new KPaginator($q);
         } catch (\Exception $ex) {
             ExceptionUtil::logException($ex, 'KRepository::loadAll');
         }
@@ -456,23 +456,5 @@ class KRepository extends EntityRepository
     protected function connection()
     {
         return $this->getEntityManager()->getConnection();
-    }
-
-    public function queryResults(QueryBuilder $q)
-    {
-        return $q->getQuery()->getResult();
-    }
-
-    public function redoWithCountQuery(QueryBuilder $q)
-    {
-        $aliases = $q->getAllAliases();
-        $alias = 'a.';
-        if (count($aliases) > 0)
-            $alias = $aliases[0] . '.';
-
-        $q->select('COUNT(' . $alias . 'id)')
-            ->setFirstResult(0)
-            ->setMaxResults(null);
-        return $q->getQuery()->getSingleScalarResult();
     }
 }
