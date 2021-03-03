@@ -3,15 +3,21 @@
 namespace Kimerikal\UtilBundle\Repository;
 
 use Doctrine\ORM\QueryBuilder;
+use Kimerikal\UtilBundle\Traits\KJsonSerialize;
 
-class KPaginator
+class KPaginator implements \JsonSerializable
 {
-    /** @var QueryBuilder */
+    use KJsonSerialize;
+
+    /**
+     * @var QueryBuilder
+     * @KMK\KJsonHide()
+     */
     private $queryBuilder;
     /** @var Array|null */
     private $list;
     /** @var int */
-    private $count;
+    private $total;
     /** @var int */
     private $offset;
     /** @var int */
@@ -22,8 +28,8 @@ class KPaginator
     public function __construct(QueryBuilder $q)
     {
         $this->queryBuilder = $q;
-        $this->offset = $this->queryBuilder->getFirstResult();
-        $this->limit = $this->queryBuilder->getMaxResults();
+        $this->offset = !is_null($this->queryBuilder->getFirstResult()) ? $this->queryBuilder->getFirstResult() : -1;
+        $this->limit = !is_null($this->queryBuilder->getMaxResults()) ? $this->queryBuilder->getMaxResults() : -1;
         $this->setResults();
         $this->setCount();
     }
@@ -32,8 +38,8 @@ class KPaginator
         return $this->list;
     }
 
-    public function count(): int {
-        return $this->count;
+    public function getTotal(): int {
+        return $this->total;
     }
 
     /**
@@ -64,8 +70,8 @@ class KPaginator
         $this->list = $this->queryResults($this->queryBuilder);
     }
 
-    public function setCount() {
-        $this->count = $this->redoWithCountQuery($this->queryBuilder);
+    public function setTotal() {
+        $this->total = $this->redoWithCountQuery($this->queryBuilder);
         $this->remaining = max(0, ($this->count - $this->offset - $this->limit));
     }
 
