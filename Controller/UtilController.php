@@ -5,11 +5,13 @@ namespace Kimerikal\UtilBundle\Controller;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Inflector\Inflector;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Kimerikal\EstablishmentBundle\Entity\Establishment;
 use Kimerikal\UtilBundle\Annotations\KListRowData;
 use Kimerikal\UtilBundle\Annotations\KTPLGeneric;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 use Kimerikal\UtilBundle\Form\SimpleForm;
+use Kimerikal\UtilBundle\Repository\KPaginator;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -102,7 +104,7 @@ class UtilController extends Controller
 
         $limit = 50;
         $offset = $limit * ($page - 1);
-        $list = $this->_repo($classData)->loadAll($offset, $limit);
+        $paginator = $this->_repo($classData)->loadAll($offset, $limit);
         $breadcrumbs = [['name' => 'Lista de ' . $options->plural]];
         $actions = '';
         if (!empty($options->bulkActionsTemplate))
@@ -113,7 +115,17 @@ class UtilController extends Controller
         //$js = 'bundles/kblog/js/list.js';
         $js = null;
 
-        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $this->setPagination($r, $list->count(), $page, 50, ''), $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $options->searchRoute, '', null, $options->rowMainRouteParams);
+        $pagination = null;
+        $list = null;
+        if ($paginator instanceof Paginator) {
+            $pagination = $this->setPagination($r, $paginator->count(), $page, 50, '');
+            $list = $paginator;
+        } else if ($paginator instanceof KPaginator) {
+            $pagination = $this->setPagination($r, $paginator->getTotal(), $page, $paginator->getLimit(), '');
+            $list = $paginator->getList();
+        }
+
+        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $options->searchRoute, '', null, $options->rowMainRouteParams);
     }
 
     /**

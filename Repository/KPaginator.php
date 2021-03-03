@@ -31,7 +31,7 @@ class KPaginator implements \JsonSerializable
         $this->offset = !is_null($this->queryBuilder->getFirstResult()) ? $this->queryBuilder->getFirstResult() : -1;
         $this->limit = !is_null($this->queryBuilder->getMaxResults()) ? $this->queryBuilder->getMaxResults() : -1;
         $this->setResults();
-        $this->setCount();
+        $this->setTotal();
     }
 
     public function getList() {
@@ -72,7 +72,7 @@ class KPaginator implements \JsonSerializable
 
     public function setTotal() {
         $this->total = $this->redoWithCountQuery($this->queryBuilder);
-        $this->remaining = max(0, ($this->count - $this->offset - $this->limit));
+        $this->remaining = max(0, ($this->total - $this->offset - $this->limit));
     }
 
     public function queryResults(QueryBuilder $q)
