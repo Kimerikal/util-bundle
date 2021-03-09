@@ -133,8 +133,6 @@ class KRepository extends EntityRepository
         }
 
         try {
-            // return $q->getQuery()->getResult();
-            // return new Paginator($q->getQuery());
             return new KPaginator($q);
         } catch (\Exception $ex) {
             ExceptionUtil::logException($ex, 'KRepository::loadAll');

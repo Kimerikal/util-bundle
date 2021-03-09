@@ -117,15 +117,18 @@ class UtilController extends Controller
 
         $pagination = null;
         $list = null;
+        $totalCount = 0;
         if ($paginator instanceof Paginator) {
-            $pagination = $this->setPagination($r, $paginator->count(), $page, 50, '');
+            $totalCount = $paginator->count();
+            $pagination = $this->setPagination($r, $totalCount, $page, 50, '');
             $list = $paginator;
         } else if ($paginator instanceof KPaginator) {
-            $pagination = $this->setPagination($r, $paginator->getTotal(), $page, $paginator->getLimit(), '');
+            $totalCount = $paginator->getTotal();
+            $pagination = $this->setPagination($r, $totalCount, $page, $paginator->getLimit(), '');
             $list = $paginator->getList();
         }
 
-        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $options->searchRoute, '', null, $options->rowMainRouteParams);
+        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $options->searchRoute, '', null, $options->rowMainRouteParams, $totalCount);
     }
 
     /**
@@ -400,7 +403,7 @@ class UtilController extends Controller
         return null;
     }
 
-    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = [], $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null, $modalsHtml = '', $batchActionsHtml = '', $customJS = '', $customCSS = '', $multiOnChangeURL = '', $ajaxSearchURL = '', $ajaxListSearchURL = '', $orderListHtml = '', $mainRouteUrl = null, $rowMainRouteParams = [])
+    protected function renderSimpleList($list, $rowTitleMethod, $rowMainRoute, $rowMainRouteKey, $rowMainRouteMethod, $breadcrumbs = [], $pageTitle = 'Esto es una lista', $currentPage = '', $icon = 'fa fa-check', $notFound = 'No hay resultados que mostrar', $rowImage = '', $rowOptions = array(), $rowData = array(), $pagination = null, $filtersHtml = '', $newElement = null, $modalsHtml = '', $batchActionsHtml = '', $customJS = '', $customCSS = '', $multiOnChangeURL = '', $ajaxSearchURL = '', $ajaxListSearchURL = '', $orderListHtml = '', $mainRouteUrl = null, $rowMainRouteParams = [], $totalCount = 0)
     {
         $params = array(
             'list' => $list,
@@ -427,7 +430,8 @@ class UtilController extends Controller
             'multiOnChangeURL' => $multiOnChangeURL,
             'ajaxSearchURL' => $ajaxSearchURL,
             'orderListHtml' => $orderListHtml,
-            'ajaxListSearchURL' => $ajaxListSearchURL
+            'ajaxListSearchURL' => $ajaxListSearchURL,
+            'totalCount' => $totalCount
         );
 
         if ($newElement && count($newElement) == 2)
