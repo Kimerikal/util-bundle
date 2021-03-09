@@ -72,7 +72,7 @@ class KUtilRestController extends UtilController
         $params['done'] = true;
         $params['data'] = [
             'list' => $paginator->getList(),
-            'meta' => ['total' => $paginator->count(), 'limit' => $paginator->getLimit(), 'offset' => $paginator->getOffset(), 'remaining' => $paginator->getRemaining()]];
+            'meta' => ['total' => $paginator->getTotal(), 'limit' => $paginator->getLimit(), 'offset' => $paginator->getOffset(), 'remaining' => $paginator->getRemaining()]];
         $params['msg'] = 'Ok';
         $status = Response::HTTP_OK;
     }
