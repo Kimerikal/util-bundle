@@ -97,7 +97,11 @@ Trait KEntityImage
 
     public function getUploadDir()
     {
-        return 'media/images/' . StrUtil::slug(get_class($this)) . '/' . $this->id . "/";
+        $base = StrUtil::slug(get_class($this));
+        if (strpos($base, 'proxies-cg-') === 0)
+            $base = str_replace('proxies-cg-', '', $base);
+
+        return sprintf('media/images/%s/%d/', $base, $this->id);
     }
 
     public function getDefaultLogo()
@@ -131,7 +135,7 @@ Trait KEntityImage
             try {
                 $fileSystem->remove($this->getAbsolutePath());
             } catch (IOException $e) {
-                ExceptionUtil::logException($e, 'KEntityImage::upload::unlimk');
+                ExceptionUtil::logException($e, 'KEntityImage::upload::unlink');
             }
         }
 
