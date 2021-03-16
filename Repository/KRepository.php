@@ -424,10 +424,15 @@ class KRepository extends EntityRepository
                     $operation = $this->queryActionDictionary($tmp[1]);
                     if ($operation === 'NOT IN' || $operation === 'IN') {
                         $q->andWhere($prefix . $field . ' ' . $operation . ' (:param_' . $count . ')');
-                        if (is_array($param))
-                            $q->setParameter('param_' . $count, $param, Connection::PARAM_STR_ARRAY);
-                        else
-                            $q->setParameter('param_' . $count, $param);
+                        if (!is_array($param)) {
+                            if (strpos($param, '|') !== false) {
+                                $param = explode('|', $param);
+                            } else {
+                                $param = [$param];
+                            }
+                        }
+
+                        $q->setParameter('param_' . $count, $param, Connection::PARAM_STR_ARRAY);
                     } else {
                         $q->andWhere($prefix . $field . ' ' . $operation . ' :param_' . $count)
                             ->setParameter('param_' . $count, $param);
