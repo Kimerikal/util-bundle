@@ -445,6 +445,20 @@ class KRepository extends EntityRepository
         return '=';
     }
 
+    /**
+     * @param string $view
+     * @return array
+     */
+    public function getListFilterParams($view = 'list'): array
+    {
+        return [];
+    }
+
+    protected function _repo($repo)
+    {
+        return $this->getEntityManager()->getRepository($repo);
+    }
+
     protected function getClassMetaFields()
     {
         $meta = $this->getClassMetadata();

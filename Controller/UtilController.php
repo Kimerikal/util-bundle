@@ -251,7 +251,7 @@ class UtilController extends Controller
             $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
         }
         if (!empty($options->listFiltersTemplate)) {
-            $filterParams = [];
+            $filterParams = ['entityName' => $entityName];
             if (!empty($options->listFiltersParams)) {
                 foreach ($options->listFiltersParams as $key => $val) {
                     if (strpos($val, '|') !== false) {
@@ -265,6 +265,8 @@ class UtilController extends Controller
                     $filterParams[$key] = $val;
                 }
             }
+
+            $filterParams = array_merge($filterParams, $this->_repo($entityClass)->getListFilterParams('list'));
             $options->listFiltersTemplate = $this->renderView($options->listFiltersTemplate, $filterParams);
         } else
             $options->listFiltersTemplate = '';
