@@ -109,8 +109,11 @@ class KRepository extends EntityRepository
      * @param bool $onlyActive
      * @return Paginator|null
      */
-    public function loadAll($offset = 0, $limit = 50, $onlyActive = false)
+    public function loadAll($offset = 0, $limit = 50, $onlyActive = false, $params = [])
     {
+        if (empty($params))
+            $params = $_REQUEST;
+
         $q = $this->createQueryBuilder('a')
             ->select('a')
             ->setMaxResults($limit)
@@ -122,10 +125,10 @@ class KRepository extends EntityRepository
                 ->setParameter('enabled', true);
         }
 
-        $this->filterQuery($q, $_REQUEST);
+        $this->filterQuery($q, $params);
         $this->filter_load_all_query($q, $offset, $limit);
 
-        $orderBy = $this->findOrderBy($this->loadAllOrderBy(), $_REQUEST);
+        $orderBy = $this->findOrderBy($this->loadAllOrderBy(), $params);
         if (!empty($orderBy)) {
             foreach ($orderBy as $key => $val) {
                 $q->addOrderBy('a.' . $key, $val);
