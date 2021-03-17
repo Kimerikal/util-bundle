@@ -397,11 +397,19 @@ class KRepository extends EntityRepository
         $fields = $this->getClassMetaFields();
         $count = 1;
         $joins = [];
+        $pattern = '';
+        if (array_key_exists('searchStr', $params)) {
+            $pattern = $params['searchStr'];
+            unset($params['searchStr']);
+        }
+
         foreach ($params as $getKey => $param) {
             foreach ($fields as $key => $data) {
-                $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
-                if (stripos($getKey, $fieldKey) !== 0)
-                    continue;
+                if (stripos($getKey, $key) !== 0) {
+                    $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
+                    if (stripos($getKey, $fieldKey) !== 0)
+                        continue;
+                }
 
                 $prefix = $letter . '.';
                 $field = $data['fieldName'];
@@ -442,6 +450,62 @@ class KRepository extends EntityRepository
                 $count++;
             }
         }
+
+        $this->patternFilter($q, $pattern, $letter);
+    }
+
+    protected function patternFilter(QueryBuilder &$q, string $searchStr, string $prefix = '')
+    {
+        $searchBy = $this->hookFilterPatternFields();
+        if (empty($searchStr) || empty($searchBy))
+            return;
+
+        $patStrArr = [];
+        $patArr = explode(' ', $searchStr);
+        foreach ($patArr as $query) {
+            if (StrUtil::endsWith($query, 's')) {
+                $tmp = substr($query, 0, (strlen($query) - 1));
+                $query = $tmp;
+            }
+
+            $patStrArr[] = StrUtil::slug($query);
+        }
+
+        $pattern = implode('%', $patStrArr);
+        if (empty($pattern))
+            return;
+
+        $pattern_orig = str_replace(' ', '%', trim($searchStr));
+        $qb = $this->getEntityManager()->createQueryBuilder();
+
+        $slugUsed = false;
+        $patternUsed = false;
+        $str = '';
+        $i = 0;
+        foreach ($searchBy as $field) {
+            $link = ':pattern';
+            if (stripos($field, 'slug') !== false) {
+                $link = ':slug';
+                $slugUsed = true;
+            } else
+                $patternUsed = true;
+
+            $str .= ($i != 0 ? ' OR ' : '') . $prefix . '.' . $field . ' LIKE ' . $link;
+            $i++;
+        }
+
+        $q->andWhere('(' . $str . ')');
+
+        if ($slugUsed)
+            $q->setParameter('slug', '%' . $pattern . '%');
+
+        if ($patternUsed)
+            $q->setParameter('pattern', '%' . $pattern_orig . '%');
+    }
+
+    protected function hookFilterPatternFields(): array
+    {
+        return [];
     }
 
     protected function queryActionDictionary($sign)
