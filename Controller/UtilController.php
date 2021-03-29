@@ -35,6 +35,7 @@ class UtilController extends Controller
      */
     public function searchAuto(Request $r, $entity, $page = 1)
     {
+        KRepository::$CURRENT_USER = $this->getUser();
         $resp = ['done' => false, 'msg' => 'Ocurrió un error inesperado', 'html' => '', 'direct' => true];
         if (is_string($page))
             $page = intval(str_replace('pagina-', '', $page));
@@ -69,7 +70,7 @@ class UtilController extends Controller
                 'pagination' => $this->setPagination($r, $paginator->getTotal(), $page, $paginator->getLimit(), '/pagina-')
             ];
 
-            $resp['mcount'] = count($paginator->getList());
+            $resp['mcount'] = $paginator->getTotal();
             $resp['html'] = $this->renderView('AdminBundle:Common:list-dyn-columns.html.twig', $params);
             $resp['done'] = true;
             $resp['msg'] = 'Ok';
