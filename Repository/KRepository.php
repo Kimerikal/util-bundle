@@ -19,6 +19,8 @@ use Symfony\Component\Validator\ConstraintViolation;
 
 class KRepository extends EntityRepository
 {
+    public static $CURRENT_USER = null;
+
     /**
      * @param array $params
      * @param null $validator - Service validator
@@ -151,6 +153,7 @@ class KRepository extends EntityRepository
     }
 
     /**
+     * @deprecated 
      * @param $pat
      * @param $filterBy
      * @param $searchBy
