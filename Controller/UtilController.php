@@ -111,6 +111,8 @@ class UtilController extends Controller
         if (!empty($options->bulkActionsTemplate))
             $actions = $this->renderView($options->bulkActionsTemplate);
 
+        $searchRoute = $this->getAutoRoute($options->searchRoute);
+
         // TODO: CUSTOM CSS, CUSTOM JS y MODALS
         //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
         //$js = 'bundles/kblog/js/list.js';
@@ -129,7 +131,7 @@ class UtilController extends Controller
             $list = $paginator->getList();
         }
 
-        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $options->searchRoute, '', null, $options->rowMainRouteParams, $totalCount);
+        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $searchRoute, '', null, $options->rowMainRouteParams, $totalCount);
     }
 
     /**
@@ -273,6 +275,23 @@ class UtilController extends Controller
             $options->listFiltersTemplate = '';
 
         return $options;
+    }
+
+    protected function getAutoRoute($key) {
+        $route = $key;
+        if (stripos($key, ':') !== false) {
+            $tmp = explode(":", $key);
+            switch ($tmp[0]) {
+                case 'search':
+                    $route = $this->generateUrl('k_util_kadmin_autogen_search', ['entity' => $tmp[1]]);
+                    break;
+                case 'edit':
+                    $route = $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $tmp[1]]);
+                    break;
+            }
+        }
+
+        return $route;
     }
 
     protected function annotationListData($entityName)
