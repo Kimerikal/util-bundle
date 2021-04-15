@@ -19,6 +19,8 @@ use Symfony\Component\Validator\ConstraintViolation;
 
 class KRepository extends EntityRepository
 {
+    public static $CURRENT_USER = null;
+
     /**
      * @param array $params
      * @param null $validator - Service validator
@@ -109,8 +111,11 @@ class KRepository extends EntityRepository
      * @param bool $onlyActive
      * @return Paginator|null
      */
-    public function loadAll($offset = 0, $limit = 50, $onlyActive = false)
+    public function loadAll($offset = 0, $limit = 50, $onlyActive = false, $params = [])
     {
+        if (empty($params))
+            $params = $_REQUEST;
+
         $q = $this->createQueryBuilder('a')
             ->select('a')
             ->setMaxResults($limit)
@@ -122,10 +127,10 @@ class KRepository extends EntityRepository
                 ->setParameter('enabled', true);
         }
 
-        $this->filterQuery($q, $_REQUEST);
+        $this->filterQuery($q, $params);
         $this->filter_load_all_query($q, $offset, $limit);
 
-        $orderBy = $this->findOrderBy($this->loadAllOrderBy(), $_REQUEST);
+        $orderBy = $this->findOrderBy($this->loadAllOrderBy(), $params);
         if (!empty($orderBy)) {
             foreach ($orderBy as $key => $val) {
                 $q->addOrderBy('a.' . $key, $val);
@@ -155,6 +160,7 @@ class KRepository extends EntityRepository
      * @param int $page
      * @param int $limit
      * @return array|null
+     * @deprecated
      */
     public function search($pat, $filterBy, $searchBy, $orderBy, $page = 1, $limit = 50)
     {
@@ -386,6 +392,21 @@ class KRepository extends EntityRepository
         return $default;
     }
 
+    protected function searchPatternKeysToParams(array &$params, array $patterns, array $keys = null, string $object = '')
+    {
+        if (empty($keys))
+            return;
+
+        foreach ($keys as $key) {
+            if (stripos($key, '|') && stripos($key, 'bundle') !== false && stripos($key, ':') !== false) {
+                $tmp = explode('|', $key);
+                $this->searchPatternKeysToParams($params, $patterns, $this->getEntityManager()->getRepository($tmp[0])->hookFilterPatternFields(), $tmp[1]);
+                continue;
+            }
+            $params[(!empty($object) ? $object . ':' : '') . $key . '__like'] = $patterns;
+        }
+    }
+
     protected function filterQuery(QueryBuilder &$q, array $params = [], $letter = 'a')
     {
         if (empty($params) || count($params) === 0)
@@ -394,11 +415,20 @@ class KRepository extends EntityRepository
         $fields = $this->getClassMetaFields();
         $count = 1;
         $joins = [];
+        $patterns = null;
+        if (array_key_exists('searchStr', $params)) {
+            $patterns = $this->preparePatternString($params['searchStr']);
+            unset($params['searchStr']);
+            $this->searchPatternKeysToParams($params, $patterns, $this->hookFilterPatternFields());
+        }
+
         foreach ($params as $getKey => $param) {
             foreach ($fields as $key => $data) {
-                $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
-                if (stripos($getKey, $fieldKey) !== 0)
-                    continue;
+                if (stripos($getKey, $key) !== 0) {
+                    $fieldKey = isset($data['columnName']) ? $data['columnName'] : $key;
+                    if (stripos($getKey, $fieldKey) !== 0)
+                        continue;
+                }
 
                 $prefix = $letter . '.';
                 $field = $data['fieldName'];
@@ -421,10 +451,21 @@ class KRepository extends EntityRepository
                     $operation = $this->queryActionDictionary($tmp[1]);
                     if ($operation === 'NOT IN' || $operation === 'IN') {
                         $q->andWhere($prefix . $field . ' ' . $operation . ' (:param_' . $count . ')');
-                        if (is_array($param))
-                            $q->setParameter('param_' . $count, $param, Connection::PARAM_STR_ARRAY);
-                        else
-                            $q->setParameter('param_' . $count, $param);
+                        if (!is_array($param)) {
+                            if (strpos($param, '|') !== false) {
+                                $param = explode('|', $param);
+                            } else {
+                                $param = [$param];
+                            }
+                        }
+
+                        $q->setParameter('param_' . $count, $param, Connection::PARAM_STR_ARRAY);
+                    } else if ($operation === 'LIKE') {
+                        $likeVal = $patterns['original'];
+                        if (stripos($field, 'slug') !== false)
+                            $likeVal = $patterns['normalized'];
+                        $q->orWhere($prefix . $field . ' LIKE :param_' . $count)
+                            ->setParameter('param_' . $count, '%' . $likeVal . '%');
                     } else {
                         $q->andWhere($prefix . $field . ' ' . $operation . ' :param_' . $count)
                             ->setParameter('param_' . $count, $param);
@@ -434,15 +475,99 @@ class KRepository extends EntityRepository
                 $count++;
             }
         }
+
+        // $this->patternFilter($q, $pattern, $letter);
+    }
+
+    protected function preparePatternString(string $patternOriginal)
+    {
+        $patStrArr = [];
+        $patArr = explode(' ', $patternOriginal);
+        foreach ($patArr as $query) {
+            if (StrUtil::endsWith($query, 's')) {
+                $tmp = substr($query, 0, (strlen($query) - 1));
+                $query = $tmp;
+            }
+
+            $patStrArr[] = StrUtil::slug($query);
+        }
+
+        return [
+            'normalized' => implode('%', $patStrArr),
+            'original' => str_replace(' ', '%', trim($patternOriginal))
+        ];
+    }
+
+    /**
+     * @param QueryBuilder $q
+     * @param string $searchStr
+     * @param string $prefix
+     */
+    protected function patternFilter(QueryBuilder &$q, string $searchStr, string $prefix = '')
+    {
+        $searchBy = $this->hookFilterPatternFields();
+        if (empty($searchStr) || empty($searchBy))
+            return;
+
+        $patterns = $this->preparePatternString($searchStr);
+        $pattern = $patterns['normalized'];
+        if (empty($pattern))
+            return;
+
+        $pattern_orig = $patterns['original'];
+        $qb = $this->getEntityManager()->createQueryBuilder();
+
+        $slugUsed = false;
+        $patternUsed = false;
+        $str = '';
+        $i = 0;
+        foreach ($searchBy as $field) {
+            $link = ':pattern';
+            if (stripos($field, 'slug') !== false) {
+                $link = ':slug';
+                $slugUsed = true;
+            } else
+                $patternUsed = true;
+
+            $str .= ($i != 0 ? ' OR ' : '') . $prefix . '.' . $field . ' LIKE ' . $link;
+            $i++;
+        }
+
+        $q->andWhere('(' . $str . ')');
+
+        if ($slugUsed)
+            $q->setParameter('slug', '%' . $pattern . '%');
+
+        if ($patternUsed)
+            $q->setParameter('pattern', '%' . $pattern_orig . '%');
+    }
+
+    protected function hookFilterPatternFields(): array
+    {
+        return [];
     }
 
     protected function queryActionDictionary($sign)
     {
-        $dictionary = ['gt' => '>', 'gte' => '>=', 'lt' => '<', 'lte' => '<=', 'in' => 'IN', 'notin' => 'NOT IN'];
+        $dictionary = ['gt' => '>', 'gte' => '>=', 'lt' => '<', 'lte' => '<=', 'in' => 'IN', 'notin' => 'NOT IN', 'like' => 'LIKE'];
         if (array_key_exists($sign, $dictionary))
             return $dictionary[$sign];
 
         return '=';
+    }
+
+    /**
+     * @param string $view
+     * @return array
+     */
+    public function getListFilterParams($view = 'list'): array
+    {
+        return [];
+    }
+
+    protected function _repo($repo)
+    {
+        return $this->getEntityManager()->getRepository($repo);
     }
 
     protected function getClassMetaFields()

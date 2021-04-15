@@ -82,7 +82,7 @@ class KPaginator implements \JsonSerializable
 
     public function redoWithCountQuery()
     {
-        $aliases = $this->queryBuilder->getAllAliases();
+        $aliases = $this->queryBuilder->getRootAliases();
         $alias = 'a.';
         if (count($aliases) > 0)
             $alias = $aliases[0] . '.';

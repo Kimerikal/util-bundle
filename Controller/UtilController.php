@@ -14,6 +14,7 @@ use Kimerikal\UtilBundle\Annotations\KTPLGeneric;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 use Kimerikal\UtilBundle\Form\SimpleForm;
 use Kimerikal\UtilBundle\Repository\KPaginator;
+use Kimerikal\UtilBundle\Repository\KRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,54 +32,53 @@ class UtilController extends Controller
     const ADMIN_ENV = 2;
 
     /**
-     * @Route("/kadmin/autogen/ajax-search/{entity}/{page}", name="k_util_kadmin_autogen_search", methods={"GET","POST"}, defaults={"page": 1})
+     * @Route("/kadmin/autogen/ajax-search/{entity}-{page}", name="k_util_kadmin_autogen_search", methods={"GET","POST"}, defaults={"page": 1})
      * @return Response
      */
     public function searchAuto(Request $r, $entity, $page = 1)
     {
-        $resp = ['done' => true, 'msg' => 'operaciones realizadas con éxito.', 'html' => ''];
-        $pattern = $r->request->get('searchStr', '');
-        if ($pattern === "undefined")
-            $pattern = '';
-        $searchByPost = $r->request->get('searchBy', '');
-        $orderBy = $r->request->get('orderBy', null);
-        if ($orderBy == "undefined")
-            $orderBy = ['c.id' => 'DESC'];
+        KRepository::$CURRENT_USER = $this->getUser();
+        $resp = ['done' => false, 'msg' => 'Ocurrió un error inesperado', 'html' => '', 'direct' => true];
+        if (is_string($page))
+            $page = intval(str_replace('pagina-', '', $page));
 
-        $filterBy = $r->request->get('filterBy', null);
-        if (!empty($filterBy) && !is_array($filterBy))
-            $filterBy = json_decode($filterBy);
+        if ($page < 1)
+            $page = 1;
 
-        $page = $r->request->get('page', 1);
-        $searchBy = null;
-        if (!empty($searchByPost))
-            $searchBy = \explode(',', $searchByPost);
-        if (!is_array($orderBy)) {
-            $tmp = \explode('|', $orderBy);
-            if (count($tmp) == 2) {
-                $orderBy = [$tmp[0] => $tmp[1]];
-            }
-            unset($tmp);
-        }
+        $limit = 50;
+        $offset = ($page - 1) * $limit;
 
         $classData = $this->getEntityUrlMap($entity);
         $entityInfo = $this->_em()->getClassMetadata($classData);
         $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
 
-        $result = $this->_repo($classData)->search($pattern, $filterBy, $searchBy, $orderBy, $page);
-        $params = array();
-        $params['limit'] = 50;
-        $params['total'] = 0;
-        $params['list'] = $result;
+        try {
+            $searchParams = $_REQUEST;
+            $paginator = $this->_repo($classData)->loadAll($offset, $limit, false, $searchParams);
+            $resp['mcount'] = $paginator->getTotal();
+            $params = [
+                'list' => $paginator->getList(),
+                'limit' => $paginator->getLimit(),
+                'total' => $paginator->getTotal(),
+                'title' => '__toString',
+                'mainRoute' => $options->rowMainRouteName,
+                'mainRouteMethod' => $options->rowMainRouteMehod,
+                'mainRouteKey' => $options->rowMainRouteKey,
+                'image' => $options->imageMethod,
+                'options' => $options->rowOptions,
+                'data' => $this->annotationListData($entityInfo->getName()),
+                'notFound' => 'No encontraron resultados para con los términos de búsqueda',
+                'multiCheck' => true,
+                'pagination' => $this->setPagination($r, $paginator->getTotal(), $page, $paginator->getLimit(), '/pagina-')
+            ];
 
-        $resp['html'] = $this->renderView('AdminBundle:Common:list-dyn-columns.html.twig', [
-            'list' => $params['list'], 'title' => '__toString', 'multiCheck' => true,
-            'mainRoute' => $options->rowMainRouteName, 'mainRouteMethod' => $options->rowMainRouteMehod, 'mainRouteKey' => $options->rowMainRouteKey,
-            'image' => $options->imageMethod, 'options' => $options->rowOptions, 'notFound' => 'No se encontraron ' . $options->plural,
-            'data' => $this->annotationListData($entityInfo->getName())
-        ]);
-
-        $resp['mcount'] = count($result);
+            $resp['mcount'] = $paginator->getTotal();
+            $resp['html'] = $this->renderView('AdminBundle:Common:list-dyn-columns.html.twig', $params);
+            $resp['done'] = true;
+            $resp['msg'] = 'Ok';
+        } catch (\Exception $e) {
+            ExceptionUtil::logException($e, 'CustomerController::searchAction');
+        }
 
         return new JsonResponse($resp);
     }
@@ -94,6 +94,7 @@ class UtilController extends Controller
      */
     public function listAuto(Request $r, $entity, $page = 1)
     {
+        KRepository::$CURRENT_USER = $this->getUser();
         $classData = $this->getEntityUrlMap($entity);
         $entityInfo = $this->_em()->getClassMetadata($classData);
         $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
@@ -106,11 +107,13 @@ class UtilController extends Controller
 
         $limit = 50;
         $offset = $limit * ($page - 1);
-        $paginator = $this->_repo($classData)->loadAll($offset, $limit);
+        $paginator = $this->_repo($classData)->loadAll($offset, $limit, false, $_REQUEST);
         $breadcrumbs = [['name' => 'Lista de ' . $options->plural]];
         $actions = '';
         if (!empty($options->bulkActionsTemplate))
             $actions = $this->renderView($options->bulkActionsTemplate);
+
+        $searchRoute = $this->getAutoRoute($options->searchRoute);
 
         // TODO: CUSTOM CSS, CUSTOM JS y MODALS
         //$modals = $this->renderView('KBlogBundle:Tiles:simple-list-modal.html.twig', array('interests' => $categories));
@@ -130,7 +133,7 @@ class UtilController extends Controller
             $list = $paginator->getList();
         }
 
-        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $options->searchRoute, '', null, $options->rowMainRouteParams, $totalCount);
+        return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $searchRoute, '', null, $options->rowMainRouteParams, $totalCount);
     }
 
     /**
@@ -263,7 +266,7 @@ class UtilController extends Controller
             $options->rowMainRouteParams = ['entity' => $auto[1], 'id' => 'id'];
         }
         if (!empty($options->listFiltersTemplate)) {
-            $filterParams = [];
+            $filterParams = ['entityName' => $entityName];
             if (!empty($options->listFiltersParams)) {
                 foreach ($options->listFiltersParams as $key => $val) {
                     if (strpos($val, '|') !== false) {
@@ -277,11 +280,30 @@ class UtilController extends Controller
                     $filterParams[$key] = $val;
                 }
             }
+
+            $filterParams = array_merge($filterParams, $this->_repo($entityClass)->getListFilterParams('list'));
             $options->listFiltersTemplate = $this->renderView($options->listFiltersTemplate, $filterParams);
         } else
             $options->listFiltersTemplate = '';
 
         return $options;
+    }
+
+    protected function getAutoRoute($key) {
+        $route = $key;
+        if (stripos($key, ':') !== false) {
+            $tmp = explode(":", $key);
+            switch ($tmp[0]) {
+                case 'search':
+                    $route = $this->generateUrl('k_util_kadmin_autogen_search', ['entity' => $tmp[1]]);
+                    break;
+                case 'edit':
+                    $route = $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $tmp[1]]);
+                    break;
+            }
+        }
+
+        return $route;
     }
 
     protected function annotationListData($entityName)

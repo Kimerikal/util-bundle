@@ -65,6 +65,9 @@ Trait KEntityImage
     public function setFile(UploadedFile $file = null)
     {
         $this->file = $file;
+        if (!empty($this->getId())) {
+            $this->upload();
+        }
     }
 
     /**
@@ -94,7 +97,11 @@ Trait KEntityImage
 
     public function getUploadDir()
     {
-        return 'media/images/' . StrUtil::slug(get_class($this)) . '/' . $this->id . "/";
+        $base = StrUtil::slug(get_class($this));
+        if (strpos($base, 'proxies-cg-') === 0)
+            $base = str_replace('proxies-cg-', '', $base);
+
+        return sprintf('media/images/%s/%d/', $base, $this->id);
     }
 
     public function getDefaultLogo()
@@ -111,17 +118,24 @@ Trait KEntityImage
      * @ORM\PostPersist
      * @ORM\PreUpdate
      */
-    public function upload(LifecycleEventArgs $event)
+    public function onEntityPersist(LifecycleEventArgs $event) {
+        if ($this->upload()) {
+            $event->getObjectManager()->persist($this);
+            $event->getObjectManager()->flush();
+        }
+    }
+
+    public function upload()
     {
         if (null === $this->getFile())
-            return;
+            return false;
 
         $fileSystem = new Filesystem();
         if (!empty($this->cover) && $fileSystem->exists($this->getAbsolutePath())) {
             try {
                 $fileSystem->remove($this->getAbsolutePath());
             } catch (IOException $e) {
-                ExceptionUtil::logException($e, 'KEntityImage::upload::unlimk');
+                ExceptionUtil::logException($e, 'KEntityImage::upload::unlink');
             }
         }
 
@@ -141,15 +155,15 @@ Trait KEntityImage
                 ImgUtil::resizeFile($path . $ext, 1024);
                 $this->cover = $fileName . $ext;
                 $this->file = null;
-
-                $event->getObjectManager()->persist($this);
-                $event->getObjectManager()->flush();
+                return true;
             }
         } catch (IOException $e) {
             ExceptionUtil::logException($e, 'KEntityImage::upload');
         } catch (\Exception $e) {
             ExceptionUtil::logException($e, 'KEntityImage::upload');
         }
+
+        return false;
     }
 
     private function getGalleryFullUrl()
