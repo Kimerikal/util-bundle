@@ -4,7 +4,9 @@ namespace Kimerikal\UtilBundle\Controller;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Inflector\Inflector;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Kimerikal\EstablishmentBundle\Entity\Establishment;
 use Kimerikal\UtilBundle\Annotations\KListRowData;
@@ -148,14 +150,24 @@ class UtilController extends Controller
         }
 
         $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
+        $save = false;
+        $errMsg = 'Ocurrió un error inesperado.';
 
         $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
-        $save = $this->checkSaveForm($r, $form);
+
+        try {
+            $save = $this->checkSaveForm($r, $form);
+        } catch (UniqueConstraintViolationException $e) {
+            ExceptionUtil::logException($e, 'UtilController::editAuto');
+            preg_match('/\'[^\']*\'/', $e->getPrevious()->getMessage(), $matches);
+            $errMsg = sprintf('El valor %s ya existe y no puede estar duplicado.', $matches[0]);
+        }
+
         if ($save) {
             $this->addFlash('done', $options->name . ' guardado con éxito.');
             return $this->redirect($r->headers->get('referer'));
         } else if ($save === false) {
-            $this->addFlash('error', 'Ocurrió un error inesperado.');
+            $this->addFlash('error', $errMsg);
         }
 
         $breadcrumbs = [
@@ -625,6 +637,11 @@ class UtilController extends Controller
         return $this->translator()->trans($str);
     }
 
+    /**
+     * @param $object
+     * @param bool $flush
+     * @throws \Doctrine\ORM\OptimisticLockException
+     */
     protected function persist($object, $flush = true)
     {
         $this->doctrine()->persist($object);
@@ -633,13 +650,13 @@ class UtilController extends Controller
     }
 
     /**
-     *
      * @param Request $r
      * @param Form $form
-     * @param boolean $save
+     * @param bool $save
      * @param array $callbackBefore - Array con el método a llamar key = method y un array de parámetros
-     * @param array $callbackAfter
-     * @return boolean
+     * @param null $callbackAfter
+     * @return bool|null
+     * @throws \Doctrine\ORM\OptimisticLockException
      */
     protected function checkSaveForm(Request $r, Form &$form, $save = true, $callbackBefore = null, $callbackAfter = null)
     {
@@ -701,5 +718,4 @@ class UtilController extends Controller
         \flush();
         \session_write_close();
     }
-
 }
