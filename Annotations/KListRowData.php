@@ -22,6 +22,7 @@ final class KListRowData extends Annotation
     public $editable = false;
     public $urlBase = null;
     public $urlParams = [];
+    public $prefix = '';
     public $suffix = '';
     public $functionParams = [];
     /**
