@@ -316,7 +316,7 @@ class UtilController extends Controller
             $reflectionProperty = new \ReflectionProperty($entityName, $p->name);
             $data = $reader->getPropertyAnnotation($reflectionProperty, KListRowData::class);
             if ($data)
-                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
+                $rowData[] = ['method' => $p->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'prefix' => $data->prefix, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
         }
 
         $methods = $reflectionClass->getMethods();
@@ -324,7 +324,7 @@ class UtilController extends Controller
             $reflectionMethod = new \ReflectionMethod($entityName, $method->name);
             $data = $reader->getMethodAnnotation($reflectionMethod, KListRowData::class);
             if ($data) {
-                $row = ['method' => $method->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
+                $row = ['method' => $method->name, 'col' => $data->col, 'title' => $data->title, 'icon' => $data->icon, 'order' => $data->order, 'editable' => $data->editable, 'urlBase' => $data->urlBase, 'urlParams' => $data->urlParams, 'type' => $data->type,'prefix' => $data->prefix, 'suffix' => $data->suffix, 'functionParams' => [], 'badgeColorClass' => $data->badgeColorClass];
                 if (isset($data->functionParams) && count($data->functionParams) > 0) {
                     $values = [];
                     foreach ($data->functionParams as $param) {
