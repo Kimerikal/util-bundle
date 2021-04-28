@@ -20,7 +20,9 @@ final class KTPLGeneric implements Annotation
     public $imageMethod = '';
     public $rowMainRouteName = 'k_util_kadmin_autogen_edit';
     public $rowMainRouteParams = [];
+    /** @deprecated - use rowMainRouteParams or rowMainRouteAuto */
     public $rowMainRouteKey = '';
+    /** @deprecated - use rowMainRouteParams or rowMainRouteAuto */
     public $rowMainRouteMehod = '';
     public $rowMainRouteAuto;
     public $newElementButton = true;
