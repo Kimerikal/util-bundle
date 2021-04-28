@@ -64,6 +64,7 @@ class UtilController extends Controller
                 'mainRoute' => $options->rowMainRouteName,
                 'mainRouteMethod' => $options->rowMainRouteMehod,
                 'mainRouteKey' => $options->rowMainRouteKey,
+                'routeParams' => $options->rowMainRouteParams,
                 'image' => $options->imageMethod,
                 'options' => $options->rowOptions,
                 'data' => $this->annotationListData($entityInfo->getName()),
