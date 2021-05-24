@@ -171,6 +171,7 @@ class UtilController extends Controller
             $this->addFlash('done', $options->name . ' guardado con éxito.');
             return $this->redirect($r->headers->get('referer'));
         } else if ($save === false) {
+            $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
             $this->addFlash('error', $errMsg);
         }
 
