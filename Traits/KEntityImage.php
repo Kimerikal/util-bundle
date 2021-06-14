@@ -21,41 +21,41 @@ Trait KEntityImage
      * @KMK\FormData(type="file", label="Imagen", col=4, newLine=true, order=10)
      * @KMK\KJsonHide()
      */
-    private $file;
+    protected $file;
 
     /**
      * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-x"}, order=100)
      * @KMK\KJsonHide()
      */
-    private $xCrop;
+    protected $xCrop;
 
     /**
      * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-y"}, order=100)
      * @KMK\KJsonHide()
      */
-    private $yCrop;
+    protected $yCrop;
 
     /**
      * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-width"}, order=100)
      * @KMK\KJsonHide()
      */
-    private $widthCrop;
+    protected $widthCrop;
 
     /**
      * @KMK\FormData(type="hidden", customAttrs={"class"="crop crop-height"}, order=100)
      * @KMK\KJsonHide()
      */
-    private $heightCrop;
+    protected $heightCrop;
 
     /**
      * @ORM\Column(name="cover", type="string", length=255, nullable=true)
      */
-    private $cover;
+    protected $cover;
 
     /**
      * @ORM\Column(name="gallery", type="json", nullable=true)
      */
-    private $gallery;
+    protected $gallery;
 
     /**
      * Sets file.
