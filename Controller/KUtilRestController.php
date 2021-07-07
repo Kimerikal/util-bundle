@@ -176,7 +176,7 @@ class KUtilRestController extends UtilController
             $tmp = $r->headers->get('authorization');
             if (!empty($tmp)) {
                 $tmp = str_replace('Bearer ', '', $token);
-                $token = $this->_repo('KUserBundle:AccessToken')->findOneBy(['token' => $token]);
+                $token = $this->_repo('KUserBundle:AccessToken')->findOneBy(['token' => $tmp]);
                 if (empty($token) || !method_exists($token, 'getUser'))
                     return null;
             }
