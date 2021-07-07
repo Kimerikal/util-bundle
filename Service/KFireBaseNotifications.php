@@ -29,6 +29,44 @@ class KFireBaseNotifications
         }
     }
 
+    public function chuckedNotifyAll(string $repo, $data)
+    {
+        $devices = null;
+        $sent = 0;
+        $total = 0;
+        $limit = 500;
+        $offset = 0;
+        $repoObj = $this->entityMananger->getRepository($repo);
+
+        do {
+            $devices = $repoObj->getTokens($offset, $limit);
+            if (!empty($devices)) {
+                $total += count($devices);
+                $response = $this->send($devices, $data);
+                if ($response && array_key_exists('failure', $response) && $response['failure'] > 0) {
+                    $tokensToRemove = [];
+                    $i = 0;
+                    foreach ($response['results'] as $result) {
+                        if (isset($result['error']))
+                            $tokensToRemove[] = $devices[$i];
+                        else
+                            $sent++;
+                        $i++;
+                    }
+
+                    if (count($tokensToRemove) > 0)
+                        $repoObj->removeByToken($tokensToRemove);
+                } else
+                    $sent += count($devices);
+            } else
+                break;
+
+            $offset += $limit;
+        } while ($devices);
+
+        return ['sent' => $sent, 'total' => $total];
+    }
+
     /**
      * @param array $tokens
      * @param array $data
