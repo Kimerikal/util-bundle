@@ -29,7 +29,7 @@ class KFireBaseNotifications
         }
     }
 
-    public function chuckedNotifyAll(string $repo, $data)
+    public function chuckedNotifyAll(string $repo, array $data)
     {
         $devices = null;
         $sent = 0;
