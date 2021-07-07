@@ -169,11 +169,20 @@ class KUtilRestController extends UtilController
         return new JsonResponse($params, $status);
     }
 
-    protected function getUserFromToken()
+    protected function getUserFromToken(Request $r = null)
     {
         $token = $this->get('security.token_storage')->getToken();
-        if (empty($token))
-            return null;
+        if (empty($token) && !empty($r)) {
+            if (!$user && $r->headers->has('authorization')) {
+                $tmp = $r->headers->get('authorization');
+                if (!empty($tmp)) {
+                    $tmp = str_replace('Bearer ', '', $token);
+                    $token = $this->_repo('KUserBundle:AccessToken')->findOneBy(['token' => $token]);
+                    if (empty($token) || !method_exists($token, 'getUser'))
+                        return null;
+                }
+            }
+        }
 
         return $token->getUser();
     }
