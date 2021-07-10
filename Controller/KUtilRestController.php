@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\Security\Core\Authentication\Token\AnonymousToken;
 
 class KUtilRestController extends UtilController
 {
@@ -172,7 +173,7 @@ class KUtilRestController extends UtilController
     protected function getUserFromToken(Request $r = null)
     {
         $token = $this->get('security.token_storage')->getToken();
-        if (empty($token) && !empty($r) && $r->headers->has('authorization')) {
+        if ((empty($token) || $token instanceof AnonymousToken) && !empty($r) && $r->headers->has('authorization')) {
             $tmp = $r->headers->get('authorization');
             if (!empty($tmp)) {
                 $token = $this->_repo('KUserBundle:AccessToken')->findOneBy(['token' => str_replace('Bearer ', '', $tmp)]);
