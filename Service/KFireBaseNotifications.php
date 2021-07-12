@@ -75,7 +75,7 @@ class KFireBaseNotifications
     public function send(array $tokens, array $data = [])
     {
         $url = 'https://fcm.googleapis.com/fcm/send';
-        $fields = json_encode(['registration_ids' => $tokens, 'data' => $data]);
+        $fields = json_encode(['registration_ids' => $tokens, 'notification' => $data]);
         $headers = ['Authorization: key=' . $this->fbServerKey, 'Content-Type: application/json'];
 
         $ch = curl_init();
@@ -83,6 +83,7 @@ class KFireBaseNotifications
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
 
         $result = curl_exec($ch);
