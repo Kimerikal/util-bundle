@@ -183,6 +183,9 @@ class KUtilRestController extends UtilController
                 return null;
         }
 
+        if (is_string($token->getUser()))
+            return null;
+
         return $token->getUser();
     }
 }
