@@ -22,7 +22,7 @@ class KFireBaseNotifications
     {
         foreach ($devices as $device) {
             $result = $this->send([$device->getToken()], $data);
-            if (!empty($result) && $result['failure'] == 1) {
+            if (!empty($result) && isset($result['failure']) && $result['failure'] == 1) {
                 $this->entityMananger->remove($device);
                 $this->entityMananger->flush();
             }
