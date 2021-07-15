@@ -22,9 +22,10 @@ class URLUtil {
         curl_setopt($ch, CURLOPT_COOKIEFILE, "cookie.txt");
         curl_setopt($ch, CURLOPT_COOKIEJAR, "cookie.txt");
         $body = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        return $body;
+        return ['status' => $httpcode, 'body' => $body];
     }
 
     public static function postUrl($url, $postParams, $referer = 'http://www.google.com/', $user_agent = self::DEFAULT_AGENT) {
