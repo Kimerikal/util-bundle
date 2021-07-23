@@ -137,6 +137,27 @@ class UtilController extends Controller
         return $this->renderSimpleList($list, '__toString', $options->rowMainRouteName, $options->rowMainRouteKey, $options->rowMainRouteMehod, $breadcrumbs, 'Lista de ' . $options->plural, 'list-' . $entity, $options->icon, 'No se encontraron ' . $options->plural, $options->imageMethod, $options->rowOptions, $this->annotationListData($entityInfo->getName()), $pagination, $options->listFiltersTemplate, ($options->newElementButton ? ['url' => $this->generateUrl('k_util_kadmin_autogen_edit', ['entity' => $entity]), 'name' => 'Crear ' . $options->name] : null), null, $actions, $js, '', $options->multiOnChangeRoute, $options->autoCompleteSearchRoute, $searchRoute, '', null, $options->rowMainRouteParams, $totalCount);
     }
 
+    public function renderListView(Request $r, $entity, $list) {
+        KRepository::$CURRENT_USER = $this->getUser();
+        $classData = $this->getEntityUrlMap($entity);
+        $entityInfo = $this->_em()->getClassMetadata($classData);
+        $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
+        
+        return $this->renderView('AdminBundle:Common:list-dyn-columns.html.twig', [
+            'list' => $list,
+            'title' => '__toString',
+            'mainRouteUrl' => null,
+            'mainRoute' => $options->rowMainRouteName,
+            'mainRouteKey' => $options->rowMainRouteKey,
+            'mainRouteMethod' => $options->rowMainRouteMehod,
+            'routeParams' => $options->rowMainRouteParams,
+            'image' => $options->imageMethod,
+            'options' => $options->rowOptions,
+            'data' => $this->annotationListData($entityInfo->getName()),
+            'multiCheck' => ''
+        ]);
+    }
+
     /**
      * @Route("/kadmin/autogen/edit/{entity}/{id}", name="k_util_kadmin_autogen_edit", methods={"POST","GET"}, defaults={"id": 0})
      * @return Response
