@@ -4,6 +4,7 @@ namespace Kimerikal\UtilBundle\Controller;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Inflector\Inflector;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\OptimisticLockException;
@@ -186,6 +187,9 @@ class UtilController extends Controller
             ExceptionUtil::logException($e, 'UtilController::editAuto');
             preg_match('/\'[^\']*\'/', $e->getPrevious()->getMessage(), $matches);
             $errMsg = sprintf('El valor %s ya existe y no puede estar duplicado.', $matches[0]);
+        } catch (DBALException $e) {
+            ExceptionUtil::logException($e, 'UtilController::editAuto');
+            $errMsg = $e->getMessage();
         }
 
         if ($save) {
