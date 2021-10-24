@@ -3,6 +3,7 @@
 namespace Kimerikal\UtilBundle\Service;
 
 use Doctrine\ORM\EntityManager;
+use Kimerikal\UtilBundle\Entity\PushNotification;
 use Kimerikal\UtilBundle\Model\BrowserPushReportable;
 
 class KFireBaseNotifications
@@ -18,7 +19,7 @@ class KFireBaseNotifications
         $this->entityMananger = $entityManager;
     }
 
-    public function notify(array $data = [], array $devices)
+    public function notify(array $devices, PushNotification $notification)
     {
         if (count($devices) === 0)
             return;
@@ -27,7 +28,7 @@ class KFireBaseNotifications
             if (!$device instanceof BrowserPushReportable)
                 continue;
 
-            $result = $this->send([$device->getToken()], $data);
+            $result = $this->send([$device->getToken()], $notification);
             if (!empty($result) && isset($result['failure']) && $result['failure'] == 1) {
                 $this->entityMananger->remove($device);
                 $this->entityMananger->flush();
@@ -78,10 +79,19 @@ class KFireBaseNotifications
      * @param array $data
      * @return mixed
      */
-    public function send(array $tokens, array $data = [])
+    public function send(array $tokens, PushNotification $notification)
     {
         $url = 'https://fcm.googleapis.com/fcm/send';
-        $fields = json_encode(['registration_ids' => $tokens, 'notification' => $data]);
+        $formattedData = [
+            'registration_ids' => $tokens,
+            'notification' => ['title' => $notification->getTitle(), 'body' => $notification->getContent()]
+        ];
+
+        if (!empty($notification->getExtraData())) {
+            $formattedData['data'] = $notification->getExtraData();
+        }
+
+        $fields = json_encode($formattedData);
         $headers = ['Authorization: key=' . $this->fbServerKey, 'Content-Type: application/json'];
 
         $ch = curl_init();
