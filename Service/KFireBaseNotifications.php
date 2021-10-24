@@ -20,7 +20,13 @@ class KFireBaseNotifications
 
     public function notify(array $data = [], array $devices)
     {
+        if (count($devices) === 0)
+            return;
+
         foreach ($devices as $device) {
+            if (!$device instanceof BrowserPushReportable)
+                continue;
+
             $result = $this->send([$device->getToken()], $data);
             if (!empty($result) && isset($result['failure']) && $result['failure'] == 1) {
                 $this->entityMananger->remove($device);
