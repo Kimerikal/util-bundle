@@ -217,7 +217,7 @@ class UtilController extends Controller
      */
     public function deleteMulti(Request $r, $entity)
     {
-        $resp = ['done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.'];
+        $resp = ['done' => false, 'msg' => 'Ocurrió un error inesperado. Inténtelo de nuevo más tarde.', 'location' => $r->headers->get('referer')];
         $elements = $r->request->get('selelements');
         if (empty($elements))
             return new JsonResponse($resp);
@@ -232,14 +232,19 @@ class UtilController extends Controller
                 try {
                     $repo->delete($object);
                     $resp['done'] = true;
-                    $resp['msg'] = $options->name . ' eliminado con éxito';
                 } catch (\Exception $ex) {
+                    $resp['done'] = false;
+                    $resp['msg'] = $ex->getMessage();
                     ExceptionUtil::logException($ex, 'UtilController::delete');
+                }
+
+                if ($resp['done']) {
+                    $resp['msg'] = 'Eliminación masiva correcta';
                 }
             }
         }
 
-        return $this->redirect($r->headers->get('referer'));
+        return new JsonResponse($resp);
     }
 
     /**
