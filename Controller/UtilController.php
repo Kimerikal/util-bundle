@@ -13,6 +13,7 @@ use Kimerikal\EstablishmentBundle\Entity\Establishment;
 use Kimerikal\UtilBundle\Annotations\KListRowData;
 use Kimerikal\UtilBundle\Annotations\KTPLGeneric;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
+use Kimerikal\UtilBundle\Exception\KFormException;
 use Kimerikal\UtilBundle\Form\SimpleForm;
 use Kimerikal\UtilBundle\Repository\KPaginator;
 use Kimerikal\UtilBundle\Repository\KRepository;
@@ -189,6 +190,8 @@ class UtilController extends Controller
             $errMsg = sprintf('El valor %s ya existe y no puede estar duplicado.', $matches[0]);
         } catch (DBALException $e) {
             ExceptionUtil::logException($e, 'UtilController::editAuto');
+            $errMsg = $e->getMessage();
+        } catch (KFormException $e) {
             $errMsg = $e->getMessage();
         }
 
