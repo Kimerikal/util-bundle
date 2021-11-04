@@ -11,7 +11,7 @@ class PushNotification
     /** @var array */
     private $extraData;
 
-    public function __construct(string $title, string $content, array $extraData = [])
+    public function __construct(string $title, string $content = '', array $extraData = [])
     {
         $this->title = $title;
         $this->content = $content;
