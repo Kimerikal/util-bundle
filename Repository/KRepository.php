@@ -464,7 +464,7 @@ class KRepository extends EntityRepository
                         $likeVal = $patterns['original'];
                         if (stripos($field, 'slug') !== false)
                             $likeVal = $patterns['normalized'];
-                        $q->orWhere($prefix . $field . ' LIKE :param_' . $count)
+                        $q->andWhere($prefix . $field . ' LIKE :param_' . $count)
                             ->setParameter('param_' . $count, '%' . $likeVal . '%');
                     } else {
                         $q->andWhere($prefix . $field . ' ' . $operation . ' :param_' . $count)

@@ -144,7 +144,7 @@ class UtilController extends Controller
         $classData = $this->getEntityUrlMap($entity);
         $entityInfo = $this->_em()->getClassMetadata($classData);
         $options = $this->getGenericAnnotations($entityInfo->getName(), $entity);
-        
+
         return $this->renderView('AdminBundle:Common:list-dyn-columns.html.twig', [
             'list' => $list,
             'title' => '__toString',
