@@ -422,6 +422,7 @@ class KRepository extends EntityRepository
             $this->searchPatternKeysToParams($params, $patterns, $this->hookFilterPatternFields());
         }
 
+        $orStatement = $q->expr()->orX();
         foreach ($params as $getKey => $param) {
             foreach ($fields as $key => $data) {
                 if (stripos($getKey, $key) !== 0) {
@@ -464,8 +465,10 @@ class KRepository extends EntityRepository
                         $likeVal = $patterns['original'];
                         if (stripos($field, 'slug') !== false)
                             $likeVal = $patterns['normalized'];
-                        $q->andWhere($prefix . $field . ' LIKE :param_' . $count)
-                            ->setParameter('param_' . $count, '%' . $likeVal . '%');
+                        /*$q->andWhere($prefix . $field . ' LIKE :param_' . $count)
+                            ->setParameter('param_' . $count, '%' . $likeVal . '%');*/
+                        $orStatement->add($q->expr()->like($prefix . $field, ':param_' . $count));
+                        $q->setParameter('param_' . $count, '%' . $likeVal . '%');
                     } else {
                         $q->andWhere($prefix . $field . ' ' . $operation . ' :param_' . $count)
                             ->setParameter('param_' . $count, $param);
@@ -474,6 +477,10 @@ class KRepository extends EntityRepository
 
                 $count++;
             }
+        }
+
+        if ($orStatement->count() > 0) {
+            $q->andWhere($orStatement);
         }
 
         // $this->patternFilter($q, $pattern, $letter);
