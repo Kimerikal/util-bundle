@@ -727,8 +727,10 @@ class UtilController extends Controller
             $this->callBackExec($form, $callbackAfter);
 
             return true;
-        } else if ($form->isSubmitted() && !$form->isValid())
+        } else if ($form->isSubmitted() && !$form->isValid()) {
+            $errors = $form->getErrors(true);
             return false;
+        }
 
         return null;
     }

@@ -1,6 +1,16 @@
 {% block tree_select_widget %}
     {% spaceless %}
-        <div id="category-tree" class="tree-demo"></div>
-        <input type="hidden" id="tree" value="{{ dataCat }}">
+        <div class="portlet green-meadow box">
+            <div class="portlet-title">
+                <div class="caption">
+                    Selección múltiple
+                </div>
+            </div>
+            <div class="portlet-body">
+                <div id="category-tree" class="tree-demo">
+                </div>
+            </div>
+        </div>
+        <input type="hidden" data-type="tree" value="{{ dataCat }}" {{ block('widget_attributes') }}>
     {% endspaceless %}
 {% endblock %}

@@ -42,8 +42,12 @@ class TreeSelectType extends AbstractType {
         /*$data = $view->vars['data'];
         $id = $view->vars['id'];
         $id2 = $form->get('id')->getData();*/
+        $currentSelected = $view->vars['value'];
+        if (!empty($currentSelected))
+            $currentSelected = explode('|', $currentSelected);
+
         $tree = $this->em->getRepository($options['target_object'])->map();
-        $view->vars['dataCat'] = $this->treeToJson($tree);
+        $view->vars['dataCat'] = $this->treeToJson($tree, $currentSelected);
         /* if (!empty($data)) {
           try {
           $bdData = $this->em->getRepository($options['target_object'])->find($data);
@@ -83,7 +87,7 @@ class TreeSelectType extends AbstractType {
             }
 
             foreach ($parents as $c) {
-                $cat = $this->em->getRepository($targetObject)->find($c); //'KBlogBundle:BlogCategory'
+                $cat = $this->em->getRepository($targetObject)->find($c);
                 if ($cat) {
                     $obj->addCategory($cat);
                 }
@@ -91,14 +95,13 @@ class TreeSelectType extends AbstractType {
         }
     }
 
-    private function treeToJson($tree, $object = null, $openAllNodes = false, $hrefPattern = array(), $isSon = false) {
+    private function treeToJson($tree, array $currentSelected = null, $openAllNodes = false, $hrefPattern = array(), $isSon = false) {
         $data = array();
-        $addHref = \count($hrefPattern) > 0 && isset($hrefPattern['route']) && isset($hrefPattern['params']);
+        $addHref = !empty($hrefPattern) && count($hrefPattern) > 0 && isset($hrefPattern['route']) && isset($hrefPattern['params']);
         foreach ($tree as $node) {
             $arr = array('id' => $node->getId(), 'text' => $node->getName());
-            if ((!is_null($object) && $object->hasCategory($node->getId()))) {
+            if (!is_null($currentSelected) && in_array($node->getId(), $currentSelected))
                 $arr['state'] = array('selected' => true);
-            }
 
             if ($openAllNodes) {
                 if (isset($arr['state']) && is_array($arr['state']))
@@ -116,9 +119,8 @@ class TreeSelectType extends AbstractType {
                 $arr['a_attr'] = array('href' => $this->generateUrl($hrefPattern['route'], $params));
             }
 
-            if (count($node->getChildren()) > 0) {
-                $arr['children'] = $this->treeToJson($node->getChildren(), $object, $openAllNodes, $addHref, true);
-            }
+            if (!empty($node->getChildren()) && count($node->getChildren()) > 0)
+                $arr['children'] = $this->treeToJson($node->getChildren(), $currentSelected, $openAllNodes, $addHref, true);
 
             $data[] = $arr;
         }
@@ -127,6 +129,11 @@ class TreeSelectType extends AbstractType {
             return \json_encode($data, \JSON_HEX_QUOT);
         else
             return $data;
+    }
+
+    public function getParent()
+    {
+        return 'text';
     }
 
     public function getName() {
