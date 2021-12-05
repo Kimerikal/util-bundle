@@ -15,6 +15,7 @@ use Kimerikal\UtilBundle\Annotations\KTPLGeneric;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
 use Kimerikal\UtilBundle\Exception\KFormException;
 use Kimerikal\UtilBundle\Form\SimpleForm;
+use Kimerikal\UtilBundle\Model\OnFormSave;
 use Kimerikal\UtilBundle\Repository\KPaginator;
 use Kimerikal\UtilBundle\Repository\KRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
@@ -722,10 +723,24 @@ class UtilController extends Controller
             $obj = $form->getData();
             if (method_exists($obj, 'setUpdatedAt'))
                 $obj->setUpdatedAt(new \DateTime());
+            /** @deprecated - use OnFormSave */
             $this->callBackExec($form, $callbackBefore);
-            $this->persist($obj);
-            $this->callBackExec($form, $callbackAfter);
+            /** */
 
+            if ($obj instanceof OnFormSave)
+                $obj->beforeFromSave();
+
+            $this->persist($obj);
+
+            /** @deprecated - use OnFormSave */
+            $this->callBackExec($form, $callbackAfter);
+            /** */
+
+            if ($obj instanceof OnFormSave) {
+                $obj->afterFormSave();
+                if ($obj->persistAgainAfterFormSave())
+                    $this->persist($obj);
+            }
             return true;
         } else if ($form->isSubmitted() && !$form->isValid()) {
             $errors = $form->getErrors(true);
