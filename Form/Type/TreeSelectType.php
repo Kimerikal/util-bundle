@@ -45,6 +45,8 @@ class TreeSelectType extends AbstractType {
         $currentSelected = $view->vars['value'];
         if (!empty($currentSelected))
             $currentSelected = explode('|', $currentSelected);
+        else
+            $currentSelected = null;
 
         $tree = $this->em->getRepository($options['target_object'])->map();
         $view->vars['dataCat'] = $this->treeToJson($tree, $currentSelected);

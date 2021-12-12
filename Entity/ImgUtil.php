@@ -178,9 +178,9 @@ class ImgUtil
     /**
      * FunciÃ³n para pasar una imagen png a jpg.
      *
-     * @param type $originalFile
-     * @param type $outputFile
-     * @param type $quality -- NÃºmero entre 0 (mejor compresiÃ³n) y 100 (mejor calidad).
+     * @param type string $originalFile
+     * @param type string $outputFile
+     * @param type int $quality -- NÃºmero entre 0 (mejor compresiÃ³n) y 100 (mejor calidad).
      */
     public static function png2jpg($originalFile, $outputFile, $quality = 90)
     {

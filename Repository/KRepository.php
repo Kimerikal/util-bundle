@@ -323,8 +323,11 @@ class KRepository extends EntityRepository
         if (!is_scalar($test))
             return false;
 
+        if (is_string($test))
+            $test = floatval($test);
+
         $type = gettype($test);
-        if ($type === "float")
+        if ($type === "float" || $type === 'double')
             return true;
         else
             return preg_match("/^\\d+\\.\\d+$/", str_replace(',', '.', abs($test))) === 1;
