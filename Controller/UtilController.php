@@ -13,6 +13,7 @@ use Kimerikal\EstablishmentBundle\Entity\Establishment;
 use Kimerikal\UtilBundle\Annotations\KListRowData;
 use Kimerikal\UtilBundle\Annotations\KTPLGeneric;
 use Kimerikal\UtilBundle\Entity\ExceptionUtil;
+use Kimerikal\UtilBundle\Event\UpdateEntityEvent;
 use Kimerikal\UtilBundle\Exception\KFormException;
 use Kimerikal\UtilBundle\Form\SimpleForm;
 use Kimerikal\UtilBundle\Model\OnFormSave;
@@ -182,6 +183,7 @@ class UtilController extends Controller
         $errMsg = 'Ocurrió un error inesperado.';
 
         $form = $this->createForm(new SimpleForm($entityInfo->getName(), $this->translator()), $object);
+        $savedObj = null;
 
         try {
             $save = $this->checkSaveForm($r, $form);
@@ -197,6 +199,7 @@ class UtilController extends Controller
         }
 
         if ($save) {
+            $this->get('event_dispatcher')->dispatch(UpdateEntityEvent::NAME, new UpdateEntityEvent($form->getData(), $entity, $classData, 'self'));
             $this->addFlash('done', $options->name . ' guardado con éxito.');
             return $this->redirect($r->headers->get('referer'));
         } else if ($save === false) {
@@ -741,7 +744,8 @@ class UtilController extends Controller
                 if ($obj->persistAgainAfterFormSave())
                     $this->persist($obj);
             }
-            return true;
+
+            return $obj;
         } else if ($form->isSubmitted() && !$form->isValid()) {
             $errors = $form->getErrors(true);
             return false;
