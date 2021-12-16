@@ -51,30 +51,43 @@ class URLUtil {
         return $body;
     }
 
-    public static function fetchURL($method, $url, $data = false) {
-        $curl = curl_init();
+    public static function fetchUrl($url, $postParams, $headers = null, $method = 'post', $referer = 'http://www.google.com/', $user_agent = '')
+    {
+        $handler = curl_init();
+        curl_setopt($handler, CURLOPT_URL, $url);
+        if (empty($method) || strtolower($method) == 'post') {
+            curl_setopt($handler, CURLOPT_POST, true);
+            curl_setopt($handler, CURLOPT_POSTFIELDS, http_build_query($postParams));
+        } else if (strtolower($method) == 'put') {
+            curl_setopt($handler, CURLOPT_CUSTOMREQUEST, 'PUT');
+            curl_setopt($handler, CURLOPT_POSTFIELDS, $postParams);
+        } else if (strtolower($method) == 'get')
+            curl_setopt($handler, CURLOPT_HTTPGET, true);
 
-        switch ($method) {
-            case "POST":
-                curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($handler, CURLOPT_USERAGENT, $user_agent);
+        if ($headers && count($headers) > 0)
+            curl_setopt($handler, CURLOPT_HTTPHEADER, $headers);
+        else
+            curl_setopt($handler, CURLOPT_HEADER, 0);
+        curl_setopt($handler, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($handler, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($handler, CURLOPT_REFERER, $referer);
+        curl_setopt($handler, CURLOPT_CONNECTTIMEOUT, 120);
+        curl_setopt($handler, CURLOPT_TIMEOUT, 120);
+        curl_setopt($handler, CURLOPT_MAXREDIRS, 10);
+        curl_setopt($handler, CURLOPT_ENCODING, "");
+        curl_setopt($handler, CURLOPT_COOKIEFILE, "cookie.txt");
+        curl_setopt($handler, CURLOPT_COOKIEJAR, "cookie.txt");
+        $body = curl_exec($handler);
+        $httpcode = curl_getinfo($handler, CURLINFO_HTTP_CODE);
 
-                if ($data)
-                    curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
-                break;
-            case "PUT":
-                curl_setopt($curl, CURLOPT_PUT, 1);
-                break;
-            default:
-                if ($data)
-                    $url = sprintf("%s?%s", $url, http_build_query($data));
+        $err = '';
+        if (false === $body) {
+            $err = curl_error($handler);
         }
+        curl_close($handler);
 
-        // Optional Authentication: - Need not touch this
-        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($curl, CURLOPT_USERPWD, "607870:cscslvhesdduvI1");
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        return curl_exec($curl);
+        return $body;
     }
 
     public static function isHtml($string) {
