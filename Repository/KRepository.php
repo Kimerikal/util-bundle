@@ -7,6 +7,7 @@ use Doctrine\Common\Inflector\Inflector;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use http\Exception\BadConversionException;
@@ -20,6 +21,33 @@ use Symfony\Component\Validator\ConstraintViolation;
 class KRepository extends EntityRepository
 {
     public static $CURRENT_USER = null;
+
+    public function setObjectWithParams(&$object, array $defaultParams) {
+        $fields = $this->getClassMetaFields();
+        $reader = new AnnotationReader();
+        foreach ($defaultParams as $param => $value) {
+            if (!array_key_exists($param, $fields))
+                continue;
+
+            $reflectionProperty = new \ReflectionProperty($this->getClassName(), $param);
+            $annotations = $reader->getPropertyAnnotations($reflectionProperty);
+            if (!empty($annotations)) {
+                $setMethod = 'set' . \ucfirst($param);
+                if (method_exists($object, $setMethod)) {
+                    foreach ($annotations as $annotation) {
+                        if ($annotation instanceof ManyToOne) {
+                            $value = $this->_repo($annotation->targetEntity)->find($defaultParams[$param]);
+                            $object->{$setMethod}($value);
+                            break;
+                        }
+
+                        $object->{$setMethod}($defaultParams[$param]);
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * @param array $params
@@ -580,7 +608,7 @@ class KRepository extends EntityRepository
         return $this->getEntityManager()->getRepository($repo);
     }
 
-    protected function getClassMetaFields()
+    public function getClassMetaFields()
     {
         $meta = $this->getClassMetadata();
         return array_merge($meta->fieldMappings, $meta->associationMappings);
